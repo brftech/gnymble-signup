@@ -36,8 +36,8 @@ serve(async (req) => {
         },
       ],
       mode: "subscription",
-      success_url: `https://gnymble.percytech.com/dashboard?payment=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `https://gnymble.percytech.com/dashboard?payment=cancelled`,
+      success_url: `https://gnymble-signup-bw2kjkzzl-percy-tech.vercel.app/dashboard?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `https://gnymble-signup-bw2kjkzzl-percy-tech.vercel.app/dashboard?payment=cancelled`,
       allow_promotion_codes: true,
     });
 
