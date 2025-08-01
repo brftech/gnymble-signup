@@ -1,5 +1,5 @@
 // src/pages/login.tsx
-import { supabase } from "../lib/supabaseclient";
+import { supabase } from "../lib/supabaseClient";
 
 export default function Login() {
   const signInWithGoogle = async () => {

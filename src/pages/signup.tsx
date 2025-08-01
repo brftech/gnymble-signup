@@ -1,12 +1,13 @@
 import { useState } from "react";
-import { supabase } from "../lib/supabaseclient";
+import { toast } from "sonner";
+import { supabase } from "../lib/supabaseClient";
 
 export default function SignupPage() {
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
-    company: "",
     email: "",
+    company: "",
     password: "",
   });
 
@@ -22,7 +23,10 @@ export default function SignupPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
     });
-    if (error) setError(error.message);
+    if (error) {
+      toast.error(error.message);
+      setError(error.message);
+    }
     setLoading(false);
   };
 
@@ -33,22 +37,60 @@ export default function SignupPage() {
 
     const fullName = `${form.firstName} ${form.lastName}`.trim();
 
-    const { error: signUpError } = await supabase.auth.signUp({
-      email: form.email,
-      password: form.password,
-      options: {
-        data: {
-          full_name: fullName,
-          company_name: form.company,
+    try {
+      // Check if user already exists by looking up the email
+      const { data: existingUsers } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('email', form.email)
+        .single();
+
+      if (existingUsers) {
+        toast.error("An account with this email already exists. Please log in instead.");
+        setError("Account already exists");
+        return;
+      }
+
+      // Create new user
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: form.email,
+        password: form.password,
+        options: {
+          data: {
+            full_name: fullName,
+            company_name: form.company,
+          },
         },
-      },
-    });
+      });
 
-    if (signUpError) {
-      setError(signUpError.message);
+      if (signUpError) {
+        // Check if it's a duplicate email error
+        if (signUpError.message.includes('already registered')) {
+          toast.error("An account with this email already exists. Please log in instead.");
+          setError("Account already exists");
+        } else {
+          toast.error(signUpError.message);
+          setError(signUpError.message);
+        }
+        return;
+      }
+
+      if (data.user) {
+        toast.success("Account created successfully! Redirecting to checkout...");
+        
+        // Add a delay to show the toast before redirecting
+        setTimeout(() => {
+          // Redirect to Stripe checkout after successful signup
+          window.location.href = "https://buy.stripe.com/6oU5kE2OHaJy76V4a9efC03";
+        }, 2000); // 2 second delay
+      }
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
+      toast.error(errorMessage);
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
@@ -64,9 +106,10 @@ export default function SignupPage() {
 
         <button
           onClick={handleGoogleSignIn}
-          className="w-full py-3 bg-[#d67635] hover:bg-[#c96528] rounded-md font-semibold text-white"
+          disabled={loading}
+          className="w-full py-3 bg-[#d67635] hover:bg-[#c96528] rounded-md font-semibold text-white disabled:opacity-50"
         >
-          Continue with Google
+          {loading ? "Signing up..." : "Sign Up with Google"}
         </button>
 
         <div className="text-gray-600 text-sm flex items-center justify-center gap-2">
@@ -96,20 +139,20 @@ export default function SignupPage() {
           </div>
 
           <input
-            name="company"
-            placeholder="Company Name"
-            onChange={handleChange}
-            value={form.company}
-            required
-            className="w-full p-3 rounded-md bg-gray-900 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#d67635]"
-          />
-
-          <input
             name="email"
             type="email"
             placeholder="Work Email"
             onChange={handleChange}
             value={form.email}
+            required
+            className="w-full p-3 rounded-md bg-gray-900 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#d67635]"
+          />
+
+          <input
+            name="company"
+            placeholder="Company Name"
+            onChange={handleChange}
+            value={form.company}
             required
             className="w-full p-3 rounded-md bg-gray-900 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#d67635]"
           />
