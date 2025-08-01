@@ -77,7 +77,7 @@ export default function Payment() {
 
     try {
       // Create Stripe checkout session with metadata
-      const response = await fetch('/functions/v1/create-checkout-session', {
+      const response = await fetch('https://rndpcearcqnvrnjxabgq.supabase.co/functions/v1/create-checkout-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
