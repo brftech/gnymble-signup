@@ -31,8 +31,8 @@ export default function Payment() {
 
       setUser(user);
 
-      // Load user profile
-      console.log("Loading user profile...");
+      // Load user profile and company data
+      console.log("Loading user profile and company...");
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select("*")
@@ -43,9 +43,35 @@ export default function Payment() {
         console.error("Profile error:", profileError);
       }
 
+      // Get user's company (direct relationship)
+      let companyName = null;
+      if (profileData?.company_id) {
+        const { data: companyData, error: companyError } = await supabase
+          .from("companies")
+          .select("name")
+          .eq("id", profileData.company_id)
+          .single();
+
+        if (companyError) {
+          console.error("Company error:", companyError);
+        } else {
+          companyName = companyData?.name;
+        }
+      }
+
+      // Combine profile and company data
+      const combinedProfile = {
+        ...profileData,
+        company_name: companyName || user?.user_metadata?.company_name
+      };
+
       console.log("Profile data:", profileData);
-      console.log("Profile phone:", profileData?.phone);
-      setProfile(profileData);
+      console.log("Company data:", companyData);
+      console.log("Combined profile:", combinedProfile);
+      console.log("Profile phone:", combinedProfile?.phone);
+      console.log("First name:", combinedProfile?.first_name);
+      console.log("Last name:", combinedProfile?.last_name);
+      setProfile(combinedProfile);
 
       // Don't auto-redirect - let user choose when to proceed
       setLoading(false);
@@ -70,13 +96,18 @@ export default function Payment() {
       stripeUrl.searchParams.set("prefilled_email", user.email);
 
       // Pre-fill name (combine first and last name if available)
-      if (profile?.full_name) {
-        stripeUrl.searchParams.set("prefilled_name", profile.full_name);
+      let fullName = null;
+      if (profile?.first_name && profile?.last_name) {
+        fullName = `${profile.first_name} ${profile.last_name}`;
+      } else if (profile?.full_name) {
+        fullName = profile.full_name;
       } else if (user?.user_metadata?.full_name) {
-        stripeUrl.searchParams.set(
-          "prefilled_name",
-          user.user_metadata.full_name
-        );
+        fullName = user.user_metadata.full_name;
+      }
+      
+      if (fullName) {
+        stripeUrl.searchParams.set("prefilled_name", fullName);
+        console.log("Setting name for Stripe:", fullName);
       }
 
       // Pre-fill phone number

@@ -221,7 +221,10 @@ export default function SignupPage() {
       });
 
       console.log("Signup response:", { data, error: signUpError });
-      console.log("Phone number being stored:", `${form.countryCode}${form.phone}`);
+      console.log(
+        "Phone number being stored:",
+        `${form.countryCode}${form.phone}`
+      );
 
       // If signup successful, immediately sign in the user
       if (data.user && !signUpError) {
