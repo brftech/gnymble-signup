@@ -163,7 +163,12 @@ export default function Payment() {
         Object.fromEntries(stripeUrl.searchParams.entries())
       );
 
-      window.location.href = stripeUrl.toString();
+      // Add a delay so we can see the logs before redirect
+      console.log("⏰ Waiting 3 seconds before redirect to Stripe...");
+      setTimeout(() => {
+        console.log("🚀 REDIRECTING TO STRIPE NOW!");
+        window.location.href = stripeUrl.toString();
+      }, 3000);
     } catch (error) {
       console.error("Error redirecting to payment:", error);
       toast.error("Error processing payment");
