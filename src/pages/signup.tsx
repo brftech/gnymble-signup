@@ -21,11 +21,18 @@ export default function SignupPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const recaptchaRef = useRef<ReCAPTCHA>(null);
+  const [emailExists, setEmailExists] = useState(false);
+  const [checkingEmail, setCheckingEmail] = useState(false);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+
+    // Check email existence in real-time
+    if (e.target.name === "email" && e.target.value) {
+      checkEmailExists(e.target.value);
+    }
   };
 
   // Password validation
@@ -95,6 +102,38 @@ export default function SignupPage() {
     { code: "+353", country: "IE", flag: "🇮🇪" },
   ];
 
+  const checkEmailExists = async (email: string) => {
+    // Basic email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setEmailExists(false);
+      setCheckingEmail(false);
+      return;
+    }
+
+    setCheckingEmail(true);
+
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("email", email)
+        .single();
+
+      if (error && error.code !== "PGRST116") {
+        // PGRST116 = no rows returned
+        console.log("Email check error:", error);
+      }
+
+      setEmailExists(!!data);
+    } catch (error) {
+      console.log("Email check error:", error);
+      setEmailExists(false);
+    } finally {
+      setCheckingEmail(false);
+    }
+  };
+
   const handleCaptchaChange = (token: string | null) => {
     setCaptchaToken(token);
   };
@@ -152,28 +191,20 @@ export default function SignupPage() {
       return;
     }
 
+    // Check if email already exists
+    if (emailExists) {
+      toast.error(
+        "An account with this email already exists. Please use a different email or sign in."
+      );
+      setError("Email already exists");
+      setLoading(false);
+      return;
+    }
+
     const fullName = `${form.firstName} ${form.lastName}`.trim();
 
     try {
-      // Check if user already exists by looking up the email in profiles table
-      const { data: existingProfile } = await supabase
-        .from("profiles")
-        .select("id, email")
-        .eq("email", form.email)
-        .single();
-
-      if (existingProfile) {
-        toast.error(
-          "An account with this email already exists. Redirecting to your dashboard..."
-        );
-        setError("Account already exists");
-        // Redirect to dashboard after a short delay
-        setTimeout(() => {
-          window.location.href = "/dashboard";
-        }, 2000);
-        setLoading(false);
-        return;
-      }
+      // Email existence is already checked in real-time, so we can proceed directly
 
       // Create new user without email confirmation
       const { data, error: signUpError } = await supabase.auth.signUp({
@@ -194,24 +225,28 @@ export default function SignupPage() {
       // If signup successful, immediately sign in the user
       if (data.user && !signUpError) {
         console.log("User created, attempting immediate sign in...");
-        
-        // Small delay to ensure user is created in database
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-          email: form.email,
-          password: form.password,
-        });
 
-        console.log("Sign in response:", { data: signInData, error: signInError });
+        // Small delay to ensure user is created in database
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        const { data: signInData, error: signInError } =
+          await supabase.auth.signInWithPassword({
+            email: form.email,
+            password: form.password,
+          });
+
+        console.log("Sign in response:", {
+          data: signInData,
+          error: signInError,
+        });
 
         if (signInError) {
           console.log("Sign in error:", signInError);
           // Try alternative approach - create user directly in profiles table
           console.log("Attempting to create user profile directly...");
-          
+
           const { error: profileError } = await supabase
-            .from('profiles')
+            .from("profiles")
             .insert([
               {
                 id: data.user.id,
@@ -219,9 +254,9 @@ export default function SignupPage() {
                 full_name: fullName,
                 phone: `${form.countryCode}${form.phone}`,
                 company_name: form.company,
-              }
+              },
             ]);
-          
+
           if (profileError) {
             console.log("Profile creation error:", profileError);
           } else {
@@ -323,15 +358,49 @@ export default function SignupPage() {
             />
           </div>
 
-          <input
-            name="email"
-            type="email"
-            placeholder="Work Email"
-            onChange={handleChange}
-            value={form.email}
-            required
-            className="w-full p-3 rounded-md bg-gray-900 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#d67635]"
-          />
+          <div className="relative">
+            <input
+              name="email"
+              type="email"
+              placeholder="Work Email"
+              onChange={handleChange}
+              value={form.email}
+              required
+              className={`w-full p-3 rounded-md bg-gray-900 border focus:outline-none focus:ring-2 focus:ring-[#d67635] ${
+                emailExists
+                  ? "border-red-500 bg-red-900/20"
+                  : checkingEmail
+                  ? "border-yellow-500 bg-yellow-900/20"
+                  : "border-gray-700"
+              }`}
+            />
+            {checkingEmail && (
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#d67635]"></div>
+              </div>
+            )}
+            {emailExists && (
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-red-400">
+                <svg
+                  className="w-5 h-5"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+            )}
+          </div>
+          {emailExists && (
+            <p className="text-red-400 text-sm">
+              An account with this email already exists. Please use a different
+              email or sign in.
+            </p>
+          )}
 
           {/* Phone field with country code */}
           <div className="flex gap-2">
@@ -527,7 +596,9 @@ export default function SignupPage() {
               !passwordValidation.isValid ||
               !passwordsMatch ||
               !phoneValidation ||
-              !captchaToken
+              !captchaToken ||
+              emailExists ||
+              checkingEmail
             }
             className="w-full py-3 bg-[#d67635] hover:bg-[#c96528] rounded-md font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed"
           >
