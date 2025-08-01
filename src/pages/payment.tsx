@@ -63,26 +63,47 @@ export default function Payment() {
       const stripeUrl = new URL(
         "https://buy.stripe.com/fZu28s1KD7xmcrfdKJefC04"
       );
+      
+      // Pre-fill email (always available)
       stripeUrl.searchParams.set("prefilled_email", user.email);
+      
+      // Pre-fill name (combine first and last name if available)
       if (profile?.full_name) {
         stripeUrl.searchParams.set("prefilled_name", profile.full_name);
+      } else if (user?.user_metadata?.full_name) {
+        stripeUrl.searchParams.set("prefilled_name", user.user_metadata.full_name);
       }
+      
+      // Pre-fill phone number
       if (profile?.phone) {
         stripeUrl.searchParams.set("prefilled_phone", profile.phone);
+      } else if (user?.user_metadata?.phone) {
+        stripeUrl.searchParams.set("prefilled_phone", user.user_metadata.phone);
       }
+      
+      // Pre-fill company name (using client_reference_id for company)
       if (profile?.company_name) {
         stripeUrl.searchParams.set("client_reference_id", profile.company_name);
+      } else if (user?.user_metadata?.company_name) {
+        stripeUrl.searchParams.set("client_reference_id", user.user_metadata.company_name);
       }
 
-      // Add success and cancel URLs
+      // Add success and cancel URLs pointing to gnymble.percytech.com
       stripeUrl.searchParams.set(
         "success_url",
-        `${window.location.origin}/dashboard?payment=success`
+        "https://gnymble.percytech.com/dashboard?payment=success"
       );
       stripeUrl.searchParams.set(
         "cancel_url",
-        `${window.location.origin}/dashboard?payment=cancelled`
+        "https://gnymble.percytech.com/dashboard?payment=cancelled"
       );
+
+      console.log("Redirecting to Stripe with pre-filled data:", {
+        email: user.email,
+        name: profile?.full_name || user?.user_metadata?.full_name,
+        phone: profile?.phone || user?.user_metadata?.phone,
+        company: profile?.company_name || user?.user_metadata?.company_name
+      });
 
       window.location.href = stripeUrl.toString();
     } catch (error) {
@@ -93,7 +114,7 @@ export default function Payment() {
   };
 
   const handleBackToDashboard = () => {
-    window.location.href = "/dashboard";
+    window.location.href = "https://gnymble.percytech.com/dashboard";
   };
 
   if (loading) {

@@ -276,7 +276,7 @@ export default function SignupPage() {
           setError("Account already exists");
           // Redirect to dashboard after a short delay
           setTimeout(() => {
-            window.location.href = "/dashboard";
+            window.location.href = "https://gnymble.percytech.com/dashboard";
           }, 2000);
         } else {
           toast.error(signUpError.message);
