@@ -63,29 +63,46 @@ export default function Payment() {
       const stripeUrl = new URL(
         "https://buy.stripe.com/fZu28s1KD7xmcrfdKJefC04"
       );
-      
+
       // Pre-fill email (always available)
       stripeUrl.searchParams.set("prefilled_email", user.email);
-      
+
       // Pre-fill name (combine first and last name if available)
       if (profile?.full_name) {
         stripeUrl.searchParams.set("prefilled_name", profile.full_name);
       } else if (user?.user_metadata?.full_name) {
-        stripeUrl.searchParams.set("prefilled_name", user.user_metadata.full_name);
+        stripeUrl.searchParams.set(
+          "prefilled_name",
+          user.user_metadata.full_name
+        );
       }
-      
+
       // Pre-fill phone number
+      let phoneNumber = null;
       if (profile?.phone) {
-        stripeUrl.searchParams.set("prefilled_phone", profile.phone);
+        phoneNumber = profile.phone;
       } else if (user?.user_metadata?.phone) {
-        stripeUrl.searchParams.set("prefilled_phone", user.user_metadata.phone);
+        phoneNumber = user.user_metadata.phone;
       }
-      
+
+      if (phoneNumber) {
+        // Ensure phone number is in E.164 format for Stripe
+        let formattedPhone = phoneNumber;
+        if (!phoneNumber.startsWith("+")) {
+          formattedPhone = `+${phoneNumber}`;
+        }
+        stripeUrl.searchParams.set("prefilled_phone", formattedPhone);
+        console.log("Setting phone number for Stripe:", formattedPhone);
+      }
+
       // Pre-fill company name (using client_reference_id for company)
       if (profile?.company_name) {
         stripeUrl.searchParams.set("client_reference_id", profile.company_name);
       } else if (user?.user_metadata?.company_name) {
-        stripeUrl.searchParams.set("client_reference_id", user.user_metadata.company_name);
+        stripeUrl.searchParams.set(
+          "client_reference_id",
+          user.user_metadata.company_name
+        );
       }
 
       // Add success and cancel URLs pointing to gnymble.percytech.com
@@ -102,7 +119,9 @@ export default function Payment() {
         email: user.email,
         name: profile?.full_name || user?.user_metadata?.full_name,
         phone: profile?.phone || user?.user_metadata?.phone,
-        company: profile?.company_name || user?.user_metadata?.company_name
+        company: profile?.company_name || user?.user_metadata?.company_name,
+        profileData: profile,
+        userMetadata: user?.user_metadata,
       });
 
       window.location.href = stripeUrl.toString();
