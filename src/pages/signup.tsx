@@ -8,6 +8,7 @@ export default function SignupPage() {
     lastName: "",
     email: "",
     phone: "",
+    countryCode: "+1", // Default to US
     company: "",
     password: "",
     confirmPassword: "",
@@ -18,7 +19,7 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
@@ -50,12 +51,44 @@ export default function SignupPage() {
 
   // Phone number validation
   const validatePhone = (phone: string) => {
+    if (!phone) return false;
     // Remove all non-digit characters for validation
     const digitsOnly = phone.replace(/\D/g, "");
-    return digitsOnly.length >= 10 && digitsOnly.length <= 15;
+    const isValid = digitsOnly.length >= 10 && digitsOnly.length <= 15;
+
+    // Debug logging (remove in production)
+    console.log(
+      `Phone validation: "${phone}" -> "${digitsOnly}" (${digitsOnly.length} digits) -> ${isValid}`
+    );
+
+    return isValid;
   };
 
   const phoneValidation = validatePhone(form.phone);
+
+  // Country codes for phone numbers
+  const countryCodes = [
+    { code: "+1", country: "US", flag: "🇺🇸" },
+    { code: "+44", country: "UK", flag: "🇬🇧" },
+    { code: "+61", country: "AU", flag: "🇦🇺" },
+    { code: "+86", country: "CN", flag: "🇨🇳" },
+    { code: "+91", country: "IN", flag: "🇮🇳" },
+    { code: "+81", country: "JP", flag: "🇯🇵" },
+    { code: "+49", country: "DE", flag: "🇩🇪" },
+    { code: "+33", country: "FR", flag: "🇫🇷" },
+    { code: "+39", country: "IT", flag: "🇮🇹" },
+    { code: "+34", country: "ES", flag: "🇪🇸" },
+    { code: "+31", country: "NL", flag: "🇳🇱" },
+    { code: "+46", country: "SE", flag: "🇸🇪" },
+    { code: "+47", country: "NO", flag: "🇳🇴" },
+    { code: "+45", country: "DK", flag: "🇩🇰" },
+    { code: "+358", country: "FI", flag: "🇫🇮" },
+    { code: "+41", country: "CH", flag: "🇨🇭" },
+    { code: "+43", country: "AT", flag: "🇦🇹" },
+    { code: "+32", country: "BE", flag: "🇧🇪" },
+    { code: "+351", country: "PT", flag: "🇵🇹" },
+    { code: "+353", country: "IE", flag: "🇮🇪" },
+  ];
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
@@ -129,7 +162,7 @@ export default function SignupPage() {
           data: {
             full_name: fullName,
             company_name: form.company,
-            phone: form.phone,
+            phone: `${form.countryCode}${form.phone}`,
           },
         },
       });
@@ -229,30 +262,38 @@ export default function SignupPage() {
             className="w-full p-3 rounded-md bg-gray-900 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#d67635]"
           />
 
-          <input
-            name="phone"
-            type="tel"
-            placeholder="Cell Phone Number"
-            onChange={handleChange}
-            value={form.phone}
-            required
-            className={`w-full p-3 rounded-md bg-gray-900 border focus:outline-none focus:ring-2 focus:ring-[#d67635] ${
-              form.phone
-                ? phoneValidation
-                  ? "border-green-500"
-                  : "border-red-500"
-                : "border-gray-700"
-            }`}
-          />
 
-          <input
-            name="company"
-            placeholder="Company Name"
-            onChange={handleChange}
-            value={form.company}
-            required
-            className="w-full p-3 rounded-md bg-gray-900 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#d67635]"
-          />
+
+          {/* Phone field with country code */}
+          <div className="flex gap-2">
+            <select
+              name="countryCode"
+              value={form.countryCode}
+              onChange={handleChange}
+              className="w-24 p-3 rounded-md bg-gray-900 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#d67635] text-sm"
+            >
+              {countryCodes.map((country) => (
+                <option key={country.code} value={country.code}>
+                  {country.flag} {country.code}
+                </option>
+              ))}
+            </select>
+            <input
+              name="phone"
+              type="tel"
+              placeholder="Cell Phone Number"
+              onChange={handleChange}
+              value={form.phone}
+              required
+              className={`flex-1 p-3 rounded-md bg-gray-900 border focus:outline-none focus:ring-2 focus:ring-[#d67635] ${
+                form.phone
+                  ? phoneValidation
+                    ? "border-green-500"
+                    : "border-red-500"
+                  : "border-gray-700"
+              }`}
+            />
+          </div>
 
           {/* Phone validation indicator */}
           {form.phone && (
@@ -264,11 +305,20 @@ export default function SignupPage() {
               <span>{phoneValidation ? "✓" : "✗"}</span>
               <span>
                 {phoneValidation
-                  ? "Valid phone number"
-                  : "Please enter a valid phone number (10-15 digits)"}
+                  ? "Valid phone number format"
+                  : "Please enter a valid phone number format (10-15 digits)"}
               </span>
             </div>
           )}
+
+          <input
+            name="company"
+            placeholder="Company Name"
+            onChange={handleChange}
+            value={form.company}
+            required
+            className="w-full p-3 rounded-md bg-gray-900 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#d67635]"
+          />
 
           {/* Password field with show/hide toggle */}
           <div className="relative">
