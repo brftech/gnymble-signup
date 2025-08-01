@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "../lib/supabaseClient";
-import { getUserCompanies, getPrimaryCompany } from "../lib/companyUtils";
 
 interface UserProfile {
   id: string;
@@ -23,18 +22,16 @@ interface OnboardingStep {
 }
 
 export default function Dashboard() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [companies, setCompanies] = useState<any[]>([]);
-  const [primaryCompany, setPrimaryCompany] = useState<any>(null);
 
   const onboardingSteps: OnboardingStep[] = [
     {
       id: "payment",
       title: "Complete Payment",
       description: "Purchase the onboarding package to get started",
-      completed: profile?.payment_status === 'paid',
+      completed: profile?.payment_status === "paid",
       required: true,
     },
     {
@@ -67,14 +64,14 @@ export default function Dashboard() {
 
   const checkPaymentStatus = () => {
     const urlParams = new URLSearchParams(window.location.search);
-    const paymentStatus = urlParams.get('payment');
-    
-    if (paymentStatus === 'success') {
-      toast.success('Payment completed successfully! Welcome to Gnymble!');
+    const paymentStatus = urlParams.get("payment");
+
+    if (paymentStatus === "success") {
+      toast.success("Payment completed successfully! Welcome to Gnymble!");
       // Clear the URL parameter
       window.history.replaceState({}, document.title, window.location.pathname);
-    } else if (paymentStatus === 'cancelled') {
-      toast.error('Payment was cancelled. You can try again anytime.');
+    } else if (paymentStatus === "cancelled") {
+      toast.error("Payment was cancelled. You can try again anytime.");
       // Clear the URL parameter
       window.history.replaceState({}, document.title, window.location.pathname);
     }
@@ -82,12 +79,13 @@ export default function Dashboard() {
 
   const checkUser = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
       if (user) {
         setUser(user);
         await loadUserProfile(user.id);
-        await loadUserCompanies();
       } else {
         // Redirect to login if no user
         window.location.href = "/login";
@@ -112,18 +110,6 @@ export default function Dashboard() {
       setProfile(data);
     } catch (error) {
       console.error("Error loading profile:", error);
-    }
-  };
-
-  const loadUserCompanies = async () => {
-    try {
-      const userCompanies = await getUserCompanies();
-      setCompanies(userCompanies);
-      
-      const primary = await getPrimaryCompany();
-      setPrimaryCompany(primary);
-    } catch (error) {
-      console.error("Error loading companies:", error);
     }
   };
 
@@ -171,7 +157,7 @@ export default function Dashboard() {
 
       <div className="max-w-7xl mx-auto p-6">
         {/* Payment Status Banner */}
-        {profile?.payment_status === 'pending' && (
+        {profile?.payment_status === "pending" && (
           <div className="bg-gradient-to-r from-red-900/20 to-orange-900/20 border border-red-800 rounded-lg p-6 mb-8">
             <div className="flex items-center justify-between">
               <div>
@@ -179,7 +165,8 @@ export default function Dashboard() {
                   Payment Required
                 </h2>
                 <p className="text-gray-300">
-                  Complete your onboarding payment to unlock full platform access and start using Gnymble.
+                  Complete your onboarding payment to unlock full platform
+                  access and start using Gnymble.
                 </p>
               </div>
               <button
@@ -192,7 +179,7 @@ export default function Dashboard() {
           </div>
         )}
 
-        {profile?.payment_status === 'paid' && (
+        {profile?.payment_status === "paid" && (
           <div className="bg-gradient-to-r from-green-900/20 to-emerald-900/20 border border-green-800 rounded-lg p-6 mb-8">
             <div className="flex items-center justify-between">
               <div>
@@ -200,10 +187,12 @@ export default function Dashboard() {
                   Payment Completed ✓
                 </h2>
                 <p className="text-gray-300">
-                  Welcome to Gnymble! Your account is now active and ready to use.
+                  Welcome to Gnymble! Your account is now active and ready to
+                  use.
                   {profile.payment_date && (
                     <span className="block mt-1 text-sm text-gray-400">
-                      Payment completed on {new Date(profile.payment_date).toLocaleDateString()}
+                      Payment completed on{" "}
+                      {new Date(profile.payment_date).toLocaleDateString()}
                     </span>
                   )}
                 </p>
@@ -233,10 +222,9 @@ export default function Dashboard() {
               <div>
                 <span className="text-gray-400">Member since:</span>
                 <span className="ml-2">
-                  {profile?.created_at 
+                  {profile?.created_at
                     ? new Date(profile.created_at).toLocaleDateString()
-                    : "Unknown"
-                  }
+                    : "Unknown"}
                 </span>
               </div>
             </div>
@@ -244,30 +232,32 @@ export default function Dashboard() {
 
           <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
             <h3 className="text-lg font-semibold mb-4">Company Information</h3>
-            {primaryCompany ? (
-              <div className="space-y-3">
-                <div>
-                  <span className="text-gray-400">Company:</span>
-                  <span className="ml-2">{primaryCompany.company_name}</span>
-                </div>
-                <div>
-                  <span className="text-gray-400">Role:</span>
-                  <span className="ml-2 capitalize">{primaryCompany.role}</span>
-                </div>
-                <div>
-                  <span className="text-gray-400">Status:</span>
-                  <span className={`ml-2 ${
-                    profile?.payment_status === 'paid' 
-                      ? 'text-green-400' 
-                      : 'text-yellow-400'
-                  }`}>
-                    {profile?.payment_status === 'paid' ? 'Active' : 'Pending Payment'}
-                  </span>
-                </div>
+            <div className="space-y-3">
+              <div>
+                <span className="text-gray-400">Company:</span>
+                <span className="ml-2">
+                  {user?.user_metadata?.company_name || "Not set"}
+                </span>
               </div>
-            ) : (
-              <p className="text-gray-400">No company information available</p>
-            )}
+              <div>
+                <span className="text-gray-400">Role:</span>
+                <span className="ml-2 capitalize">Owner</span>
+              </div>
+              <div>
+                <span className="text-gray-400">Status:</span>
+                <span
+                  className={`ml-2 ${
+                    profile?.payment_status === "paid"
+                      ? "text-green-400"
+                      : "text-yellow-400"
+                  }`}
+                >
+                  {profile?.payment_status === "paid"
+                    ? "Active"
+                    : "Pending Payment"}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -314,7 +304,9 @@ export default function Dashboard() {
 
         {/* Next Steps */}
         <div className="mt-8 bg-blue-900/20 border border-blue-800 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-blue-400 mb-4">Next Steps</h3>
+          <h3 className="text-lg font-semibold text-blue-400 mb-4">
+            Next Steps
+          </h3>
           <div className="space-y-3 text-gray-300">
             <p>1. Complete your payment to unlock platform access</p>
             <p>2. Set up your company preferences and SMS settings</p>
@@ -325,4 +317,4 @@ export default function Dashboard() {
       </div>
     </div>
   );
-} 
+}

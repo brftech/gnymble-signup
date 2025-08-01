@@ -104,3 +104,4 @@ pids
 
 # Supabase
 .supabase/
+.vercel
