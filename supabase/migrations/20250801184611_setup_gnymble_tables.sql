@@ -6,7 +6,6 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email TEXT NOT NULL,
   full_name TEXT,
-  company_name TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -28,11 +27,10 @@ CREATE TABLE IF NOT EXISTS public.user_roles (
 -- Enable RLS on user_roles
 ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
 
--- 3. Create companies table for business information
+-- 3. Create companies table (separate from customers for now, can be merged later)
 CREATE TABLE IF NOT EXISTS public.companies (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
-  owner_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   industry TEXT,
   size TEXT,
   website TEXT,
@@ -45,7 +43,24 @@ CREATE TABLE IF NOT EXISTS public.companies (
 -- Enable RLS on companies
 ALTER TABLE public.companies ENABLE ROW LEVEL SECURITY;
 
--- 4. Create security definer functions
+-- 4. Create user_company_roles junction table for many-to-many relationship
+CREATE TYPE IF NOT EXISTS public.company_role AS ENUM ('owner', 'admin', 'member', 'viewer');
+
+CREATE TABLE IF NOT EXISTS public.user_company_roles (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  company_id UUID REFERENCES public.companies(id) ON DELETE CASCADE NOT NULL,
+  role company_role NOT NULL DEFAULT 'member',
+  is_primary boolean DEFAULT false, -- Indicates if this is the user's primary company
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE (user_id, company_id)
+);
+
+-- Enable RLS on user_company_roles
+ALTER TABLE public.user_company_roles ENABLE ROW LEVEL SECURITY;
+
+-- 5. Create security definer functions
 CREATE OR REPLACE FUNCTION public.has_role(_user_id UUID, _role app_role)
 RETURNS BOOLEAN
 LANGUAGE SQL
@@ -72,21 +87,46 @@ AS $$
   LIMIT 1
 $$;
 
--- 5. Create trigger function for auto-creating profiles and companies
+-- Function to get user's companies
+CREATE OR REPLACE FUNCTION public.get_user_companies(_user_id UUID)
+RETURNS TABLE (
+  company_id UUID,
+  company_name TEXT,
+  role company_role,
+  is_primary boolean
+)
+LANGUAGE SQL
+STABLE
+SECURITY DEFINER
+AS $$
+  SELECT 
+    c.id as company_id,
+    c.name as company_name,
+    ucr.role,
+    ucr.is_primary
+  FROM public.user_company_roles ucr
+  JOIN public.companies c ON c.id = ucr.company_id
+  WHERE ucr.user_id = _user_id
+  ORDER BY ucr.is_primary DESC, c.name ASC
+$$;
+
+-- 6. Create trigger function for auto-creating profiles and initial company
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = ''
 AS $$
+DECLARE
+  new_company_id UUID;
+  company_name TEXT;
 BEGIN
   -- Create profile
-  INSERT INTO public.profiles (id, email, full_name, company_name)
+  INSERT INTO public.profiles (id, email, full_name)
   VALUES (
     NEW.id, 
     NEW.email,
-    COALESCE(NEW.raw_user_meta_data ->> 'full_name', NEW.raw_user_meta_data ->> 'name'),
-    NEW.raw_user_meta_data ->> 'company_name'
+    COALESCE(NEW.raw_user_meta_data ->> 'full_name', NEW.raw_user_meta_data ->> 'name')
   );
   
   -- Assign default 'user' role
@@ -94,12 +134,24 @@ BEGIN
   VALUES (NEW.id, 'user');
   
   -- Create company if company_name is provided
-  IF NEW.raw_user_meta_data ->> 'company_name' IS NOT NULL THEN
-    INSERT INTO public.companies (name, owner_id)
-    VALUES (
-      NEW.raw_user_meta_data ->> 'company_name',
-      NEW.id
-    );
+  company_name := NEW.raw_user_meta_data ->> 'company_name';
+  IF company_name IS NOT NULL THEN
+    -- Check if company already exists
+    SELECT id INTO new_company_id
+    FROM public.companies
+    WHERE name = company_name
+    LIMIT 1;
+    
+    -- Create company if it doesn't exist
+    IF new_company_id IS NULL THEN
+      INSERT INTO public.companies (name)
+      VALUES (company_name)
+      RETURNING id INTO new_company_id;
+    END IF;
+    
+    -- Link user to company as owner
+    INSERT INTO public.user_company_roles (user_id, company_id, role, is_primary)
+    VALUES (NEW.id, new_company_id, 'owner', true);
   END IF;
   
   RETURN NEW;
@@ -112,7 +164,7 @@ CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
--- 6. Set up Row Level Security policies
+-- 7. Set up Row Level Security policies
 
 -- Profiles policies
 CREATE POLICY "Users can view own profile" ON public.profiles
@@ -125,17 +177,41 @@ CREATE POLICY "Users can update own profile" ON public.profiles
 CREATE POLICY "Users can view own roles" ON public.user_roles
   FOR SELECT USING (auth.uid() = user_id);
 
--- Companies policies
-CREATE POLICY "Users can view own company" ON public.companies
-  FOR SELECT USING (auth.uid() = owner_id);
+-- Companies policies - users can view companies they're members of
+CREATE POLICY "Users can view their companies" ON public.companies
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public.user_company_roles 
+      WHERE user_id = auth.uid() AND company_id = companies.id
+    )
+  );
 
-CREATE POLICY "Users can update own company" ON public.companies
-  FOR UPDATE USING (auth.uid() = owner_id);
+CREATE POLICY "Company owners can update their companies" ON public.companies
+  FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM public.user_company_roles 
+      WHERE user_id = auth.uid() AND company_id = companies.id AND role = 'owner'
+    )
+  );
 
-CREATE POLICY "Users can insert own company" ON public.companies
-  FOR INSERT WITH CHECK (auth.uid() = owner_id);
+-- User company roles policies
+CREATE POLICY "Users can view their company roles" ON public.user_company_roles
+  FOR SELECT USING (user_id = auth.uid());
 
--- 7. Create indexes for better performance
+CREATE POLICY "Company owners can manage company members" ON public.user_company_roles
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM public.user_company_roles ucr2
+      WHERE ucr2.user_id = auth.uid() 
+        AND ucr2.company_id = user_company_roles.company_id 
+        AND ucr2.role IN ('owner', 'admin')
+    )
+  );
+
+-- 8. Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_profiles_email ON public.profiles(email);
 CREATE INDEX IF NOT EXISTS idx_user_roles_user_id ON public.user_roles(user_id);
-CREATE INDEX IF NOT EXISTS idx_companies_owner_id ON public.companies(owner_id);
+CREATE INDEX IF NOT EXISTS idx_companies_name ON public.companies(name);
+CREATE INDEX IF NOT EXISTS idx_user_company_roles_user_id ON public.user_company_roles(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_company_roles_company_id ON public.user_company_roles(company_id);
+CREATE INDEX IF NOT EXISTS idx_user_company_roles_primary ON public.user_company_roles(user_id, is_primary) WHERE is_primary = true;

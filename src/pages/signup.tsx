@@ -40,13 +40,15 @@ export default function SignupPage() {
     try {
       // Check if user already exists by looking up the email
       const { data: existingUsers } = await supabase
-        .from('profiles')
-        .select('email')
-        .eq('email', form.email)
+        .from("profiles")
+        .select("email")
+        .eq("email", form.email)
         .single();
 
       if (existingUsers) {
-        toast.error("An account with this email already exists. Please log in instead.");
+        toast.error(
+          "An account with this email already exists. Please log in instead."
+        );
         setError("Account already exists");
         return;
       }
@@ -65,8 +67,10 @@ export default function SignupPage() {
 
       if (signUpError) {
         // Check if it's a duplicate email error
-        if (signUpError.message.includes('already registered')) {
-          toast.error("An account with this email already exists. Please log in instead.");
+        if (signUpError.message.includes("already registered")) {
+          toast.error(
+            "An account with this email already exists. Please log in instead."
+          );
           setError("Account already exists");
         } else {
           toast.error(signUpError.message);
@@ -76,16 +80,20 @@ export default function SignupPage() {
       }
 
       if (data.user) {
-        toast.success("Account created successfully! Redirecting to checkout...");
-        
+        toast.success(
+          "Account created successfully! Redirecting to checkout..."
+        );
+
         // Add a delay to show the toast before redirecting
         setTimeout(() => {
           // Redirect to Stripe checkout after successful signup
-          window.location.href = "https://buy.stripe.com/6oU5kE2OHaJy76V4a9efC03";
+          window.location.href =
+            "https://buy.stripe.com/6oU5kE2OHaJy76V4a9efC03";
         }, 2000); // 2 second delay
       }
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
+      const errorMessage =
+        error instanceof Error ? error.message : "An unexpected error occurred";
       toast.error(errorMessage);
       setError(errorMessage);
     } finally {
