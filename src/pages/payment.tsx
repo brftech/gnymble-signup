@@ -94,6 +94,8 @@ export default function Payment() {
       
       if (fullName) {
         stripeUrl.searchParams.set("prefilled_name", fullName);
+        stripeUrl.searchParams.set("name", fullName);
+        stripeUrl.searchParams.set("customer_name", fullName);
         console.log("Setting name for Stripe:", fullName);
       }
 
@@ -111,21 +113,22 @@ export default function Payment() {
         if (!phoneNumber.startsWith("+")) {
           formattedPhone = `+${phoneNumber}`;
         }
-        // Try both possible Stripe phone parameters
+        // Try multiple possible Stripe phone parameters
         stripeUrl.searchParams.set("prefilled_phone", formattedPhone);
         stripeUrl.searchParams.set("prefilled_phone_number", formattedPhone);
+        stripeUrl.searchParams.set("phone", formattedPhone);
         console.log("Setting phone number for Stripe:", formattedPhone);
-        console.log("Full Stripe URL:", stripeUrl.toString());
       }
 
-      // Pre-fill company name (using client_reference_id for company)
+      // Pre-fill company name (try multiple parameters)
       if (profile?.company_name) {
         stripeUrl.searchParams.set("client_reference_id", profile.company_name);
+        stripeUrl.searchParams.set("company", profile.company_name);
+        stripeUrl.searchParams.set("prefilled_company", profile.company_name);
       } else if (user?.user_metadata?.company_name) {
-        stripeUrl.searchParams.set(
-          "client_reference_id",
-          user.user_metadata.company_name
-        );
+        stripeUrl.searchParams.set("client_reference_id", user.user_metadata.company_name);
+        stripeUrl.searchParams.set("company", user.user_metadata.company_name);
+        stripeUrl.searchParams.set("prefilled_company", user.user_metadata.company_name);
       }
 
       // Add success and cancel URLs pointing to gnymble.percytech.com
@@ -146,6 +149,9 @@ export default function Payment() {
         profileData: profile,
         userMetadata: user?.user_metadata,
       });
+      
+      console.log("Final Stripe URL:", stripeUrl.toString());
+      console.log("URL parameters:", Object.fromEntries(stripeUrl.searchParams.entries()));
 
       window.location.href = stripeUrl.toString();
     } catch (error) {
