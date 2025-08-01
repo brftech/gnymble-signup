@@ -76,99 +76,33 @@ export default function Payment() {
     setRedirecting(true);
 
     try {
-      // Use direct Stripe URL with pre-filled parameters
-      const stripeUrl = new URL(
-        "https://buy.stripe.com/fZu28s1KD7xmcrfdKJefC04"
-      );
+      // Create Stripe checkout session with metadata
+      const response = await fetch('/functions/v1/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: user.id,
+          email: user.email,
+          name: profile?.full_name || user?.user_metadata?.full_name,
+          phone: profile?.phone || user?.user_metadata?.phone,
+          company: profile?.company_name || user?.user_metadata?.company_name,
+        }),
+      });
 
-      // Pre-fill email (always available)
-      stripeUrl.searchParams.set("prefilled_email", user.email);
-      stripeUrl.searchParams.set("email", user.email);
-
-      // Pre-fill name (combine first and last name if available)
-      let fullName = null;
-      if (profile?.first_name && profile?.last_name) {
-        fullName = `${profile.first_name} ${profile.last_name}`;
-      } else if (profile?.full_name) {
-        fullName = profile.full_name;
-      } else if (user?.user_metadata?.full_name) {
-        fullName = user.user_metadata.full_name;
-      }
-
-      if (fullName) {
-        stripeUrl.searchParams.set("prefilled_name", fullName);
-        stripeUrl.searchParams.set("name", fullName);
-        stripeUrl.searchParams.set("customer[name]", fullName);
-        console.log("Setting name for Stripe:", fullName);
-      }
-
-      // Pre-fill phone number
-      let phoneNumber = null;
-      if (profile?.phone) {
-        phoneNumber = profile.phone;
-      } else if (user?.user_metadata?.phone) {
-        phoneNumber = user.user_metadata.phone;
-      }
-
-      if (phoneNumber) {
-        // Ensure phone number is in E.164 format for Stripe
-        let formattedPhone = phoneNumber;
-        if (!phoneNumber.startsWith("+")) {
-          formattedPhone = `+${phoneNumber}`;
-        }
-        // Try the most common Stripe parameters
-        stripeUrl.searchParams.set("prefilled_phone", formattedPhone);
-        stripeUrl.searchParams.set("phone", formattedPhone);
-        stripeUrl.searchParams.set("customer[phone]", formattedPhone);
-        console.log("Setting phone number for Stripe:", formattedPhone);
-      }
-
-      // Pre-fill company name (try multiple parameters)
-      if (profile?.company_name) {
-        stripeUrl.searchParams.set("client_reference_id", profile.company_name);
-        stripeUrl.searchParams.set("company", profile.company_name);
-        stripeUrl.searchParams.set("prefilled_company", profile.company_name);
-      } else if (user?.user_metadata?.company_name) {
-        stripeUrl.searchParams.set(
-          "client_reference_id",
-          user.user_metadata.company_name
-        );
-        stripeUrl.searchParams.set("company", user.user_metadata.company_name);
-        stripeUrl.searchParams.set(
-          "prefilled_company",
-          user.user_metadata.company_name
-        );
-      }
-
-      // Add success and cancel URLs pointing to gnymble.percytech.com
-      stripeUrl.searchParams.set(
-        "success_url",
-        "https://gnymble.percytech.com/dashboard?payment=success"
-      );
-      stripeUrl.searchParams.set(
-        "cancel_url",
-        "https://gnymble.percytech.com/dashboard?payment=cancelled"
-      );
-
-      console.log("Redirecting to Stripe with pre-filled data:", {
+      const { url } = await response.json();
+      
+      console.log("Created Stripe session with metadata:", {
+        user_id: user.id,
         email: user.email,
         name: profile?.full_name || user?.user_metadata?.full_name,
         phone: profile?.phone || user?.user_metadata?.phone,
         company: profile?.company_name || user?.user_metadata?.company_name,
-        profileData: profile,
-        userMetadata: user?.user_metadata,
       });
 
-      console.log("Final Stripe URL:", stripeUrl.toString());
-      console.log(
-        "URL parameters:",
-        Object.fromEntries(stripeUrl.searchParams.entries())
-      );
-
-      // Log the final URL and redirect immediately
-      console.log("🚀 REDIRECTING TO STRIPE NOW!");
-      console.log("Final URL:", stripeUrl.toString());
-      window.location.href = stripeUrl.toString();
+      console.log("Redirecting to Stripe session:", url);
+      window.location.href = url;
     } catch (error) {
       console.error("Error redirecting to payment:", error);
       toast.error("Error processing payment");
