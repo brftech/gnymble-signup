@@ -45,10 +45,8 @@ export default function Payment() {
       console.log("Profile data:", profileData);
       setProfile(profileData);
 
-      // Add a small delay to show the payment page before redirecting
-      setTimeout(() => {
-        redirectToStripeCheckout(user, profileData);
-      }, 2000);
+      // Don't auto-redirect - let user choose when to proceed
+      setLoading(false);
     } catch (error) {
       console.error("Error loading user data:", error);
       toast.error("Error loading payment information");
