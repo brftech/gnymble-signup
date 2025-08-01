@@ -43,30 +43,17 @@ export default function Payment() {
         console.error("Profile error:", profileError);
       }
 
-      // Get user's company (direct relationship)
-      let companyName = null;
-      if (profileData?.company_id) {
-        const { data: companyData, error: companyError } = await supabase
-          .from("companies")
-          .select("name")
-          .eq("id", profileData.company_id)
-          .single();
-
-        if (companyError) {
-          console.error("Company error:", companyError);
-        } else {
-          companyName = companyData?.name;
-        }
-      }
+      // Get company name from user metadata (simpler approach for payment page)
+      const companyName = user?.user_metadata?.company_name;
 
       // Combine profile and company data
       const combinedProfile = {
         ...profileData,
-        company_name: companyName || user?.user_metadata?.company_name
+        company_name: companyName
       };
 
       console.log("Profile data:", profileData);
-      console.log("Company data:", companyData);
+      console.log("Company name:", companyName);
       console.log("Combined profile:", combinedProfile);
       console.log("Profile phone:", combinedProfile?.phone);
       console.log("First name:", combinedProfile?.first_name);
