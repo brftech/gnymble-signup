@@ -8,6 +8,9 @@ interface UserProfile {
   email: string;
   full_name: string;
   phone: string;
+  payment_status: string;
+  stripe_customer_id?: string;
+  payment_date?: string;
   created_at: string;
 }
 
@@ -31,7 +34,7 @@ export default function Dashboard() {
       id: "payment",
       title: "Complete Payment",
       description: "Purchase the onboarding package to get started",
-      completed: false,
+      completed: profile?.payment_status === 'paid',
       required: true,
     },
     {
@@ -167,25 +170,48 @@ export default function Dashboard() {
       </header>
 
       <div className="max-w-7xl mx-auto p-6">
-        {/* Payment Required Banner */}
-        <div className="bg-gradient-to-r from-red-900/20 to-orange-900/20 border border-red-800 rounded-lg p-6 mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-semibold text-red-400 mb-2">
-                Payment Required
-              </h2>
-              <p className="text-gray-300">
-                Complete your onboarding payment to unlock full platform access and start using Gnymble.
-              </p>
+        {/* Payment Status Banner */}
+        {profile?.payment_status === 'pending' && (
+          <div className="bg-gradient-to-r from-red-900/20 to-orange-900/20 border border-red-800 rounded-lg p-6 mb-8">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-semibold text-red-400 mb-2">
+                  Payment Required
+                </h2>
+                <p className="text-gray-300">
+                  Complete your onboarding payment to unlock full platform access and start using Gnymble.
+                </p>
+              </div>
+              <button
+                onClick={handlePayment}
+                className="bg-[#d67635] hover:bg-[#c96528] px-6 py-3 rounded-md font-semibold text-white"
+              >
+                Complete Payment
+              </button>
             </div>
-            <button
-              onClick={handlePayment}
-              className="bg-[#d67635] hover:bg-[#c96528] px-6 py-3 rounded-md font-semibold text-white"
-            >
-              Complete Payment
-            </button>
           </div>
-        </div>
+        )}
+
+        {profile?.payment_status === 'paid' && (
+          <div className="bg-gradient-to-r from-green-900/20 to-emerald-900/20 border border-green-800 rounded-lg p-6 mb-8">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-semibold text-green-400 mb-2">
+                  Payment Completed ✓
+                </h2>
+                <p className="text-gray-300">
+                  Welcome to Gnymble! Your account is now active and ready to use.
+                  {profile.payment_date && (
+                    <span className="block mt-1 text-sm text-gray-400">
+                      Payment completed on {new Date(profile.payment_date).toLocaleDateString()}
+                    </span>
+                  )}
+                </p>
+              </div>
+              <div className="text-green-400 text-2xl">✓</div>
+            </div>
+          </div>
+        )}
 
         {/* User Info */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -230,7 +256,13 @@ export default function Dashboard() {
                 </div>
                 <div>
                   <span className="text-gray-400">Status:</span>
-                  <span className="ml-2 text-yellow-400">Pending Payment</span>
+                  <span className={`ml-2 ${
+                    profile?.payment_status === 'paid' 
+                      ? 'text-green-400' 
+                      : 'text-yellow-400'
+                  }`}>
+                    {profile?.payment_status === 'paid' ? 'Active' : 'Pending Payment'}
+                  </span>
                 </div>
               </div>
             ) : (
