@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { toast } from "sonner";
+import ReCAPTCHA from "react-google-recaptcha";
 import { supabase } from "../lib/supabaseClient";
 
 export default function SignupPage() {
@@ -18,6 +19,8 @@ export default function SignupPage() {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -92,6 +95,14 @@ export default function SignupPage() {
     { code: "+353", country: "IE", flag: "🇮🇪" },
   ];
 
+  const handleCaptchaChange = (token: string | null) => {
+    setCaptchaToken(token);
+  };
+
+  const handleCaptchaExpired = () => {
+    setCaptchaToken(null);
+  };
+
   const handleGoogleSignIn = async () => {
     setLoading(true);
     const { error } = await supabase.auth.signInWithOAuth({
@@ -133,6 +144,14 @@ export default function SignupPage() {
       return;
     }
 
+    // Validate reCAPTCHA
+    if (!captchaToken) {
+      toast.error("Please complete the reCAPTCHA verification.");
+      setError("reCAPTCHA verification required");
+      setLoading(false);
+      return;
+    }
+
     const fullName = `${form.firstName} ${form.lastName}`.trim();
 
     try {
@@ -156,11 +175,12 @@ export default function SignupPage() {
         return;
       }
 
-      // Create new user
+      // Create new user without email confirmation
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: form.email,
         password: form.password,
         options: {
+          emailRedirectTo: undefined, // Disable email confirmation
           data: {
             full_name: fullName,
             company_name: form.company,
@@ -189,11 +209,11 @@ export default function SignupPage() {
 
       if (data.user) {
         console.log("User created successfully:", data.user);
-        
+
         // Check if we have a session
         const { data: sessionData } = await supabase.auth.getSession();
         console.log("Session data:", sessionData);
-        
+
         toast.success(
           "Account created successfully! Redirecting to checkout..."
         );
@@ -447,13 +467,24 @@ export default function SignupPage() {
             </div>
           )}
 
+          {/* reCAPTCHA */}
+          <div className="flex justify-center">
+            <ReCAPTCHA
+              ref={recaptchaRef}
+              sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI" // Test key - replace with your actual key
+              onChange={handleCaptchaChange}
+              onExpired={handleCaptchaExpired}
+            />
+          </div>
+
           <button
             type="submit"
             disabled={
               loading ||
               !passwordValidation.isValid ||
               !passwordsMatch ||
-              !phoneValidation
+              !phoneValidation ||
+              !captchaToken
             }
             className="w-full py-3 bg-[#d67635] hover:bg-[#c96528] rounded-md font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed"
           >

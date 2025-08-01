@@ -5,6 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Development Commands
 
 ### Running the Application
+
 ```bash
 npm run dev         # Start Vite dev server on port 5173, opens to /signup
 npm run build       # TypeScript compile + Vite production build
@@ -13,7 +14,9 @@ npm run lint        # Run ESLint on the codebase
 ```
 
 ### Environment Setup
+
 The application requires Supabase environment variables:
+
 - `VITE_SUPABASE_URL`: Your Supabase project URL
 - `VITE_SUPABASE_ANON_KEY`: Your Supabase anonymous key
 
@@ -22,6 +25,7 @@ Create a `.env.local` file with these variables before running the application.
 ## Architecture Overview
 
 ### Tech Stack
+
 - **Frontend**: React 19 with TypeScript, Vite build tool
 - **Styling**: Tailwind CSS with PostCSS
 - **Routing**: React Router v6
@@ -48,6 +52,7 @@ The Supabase database (defined in `/supabase/migrations/`) includes:
 - **user_roles**: Role-based access control (admin, customer, user)
 
 Key features:
+
 - Row Level Security (RLS) enabled on all tables
 - Automatic profile and company creation on signup via database trigger
 - Users can only view/update their own data
@@ -57,8 +62,8 @@ Key features:
 1. **Signup Methods**:
    - Google OAuth integration
    - Email/password with form validation
-   
 2. **Post-Signup**:
+
    - Creates user profile automatically via database trigger
    - Redirects to Stripe checkout (hardcoded URL in signup.tsx:91)
    - Assigns default 'user' role
