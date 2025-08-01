@@ -49,7 +49,7 @@ export default function Payment() {
       // Combine profile and company data
       const combinedProfile = {
         ...profileData,
-        company_name: companyName
+        company_name: companyName,
       };
 
       console.log("Profile data:", profileData);
@@ -71,6 +71,7 @@ export default function Payment() {
   };
 
   const redirectToStripeCheckout = async (user: any, profile: any) => {
+    console.log("🚀 PAYMENT BUTTON CLICKED - Starting redirect process");
     setRedirecting(true);
 
     try {
@@ -91,7 +92,7 @@ export default function Payment() {
       } else if (user?.user_metadata?.full_name) {
         fullName = user.user_metadata.full_name;
       }
-      
+
       if (fullName) {
         stripeUrl.searchParams.set("prefilled_name", fullName);
         stripeUrl.searchParams.set("name", fullName);
@@ -126,9 +127,15 @@ export default function Payment() {
         stripeUrl.searchParams.set("company", profile.company_name);
         stripeUrl.searchParams.set("prefilled_company", profile.company_name);
       } else if (user?.user_metadata?.company_name) {
-        stripeUrl.searchParams.set("client_reference_id", user.user_metadata.company_name);
+        stripeUrl.searchParams.set(
+          "client_reference_id",
+          user.user_metadata.company_name
+        );
         stripeUrl.searchParams.set("company", user.user_metadata.company_name);
-        stripeUrl.searchParams.set("prefilled_company", user.user_metadata.company_name);
+        stripeUrl.searchParams.set(
+          "prefilled_company",
+          user.user_metadata.company_name
+        );
       }
 
       // Add success and cancel URLs pointing to gnymble.percytech.com
@@ -149,9 +156,12 @@ export default function Payment() {
         profileData: profile,
         userMetadata: user?.user_metadata,
       });
-      
+
       console.log("Final Stripe URL:", stripeUrl.toString());
-      console.log("URL parameters:", Object.fromEntries(stripeUrl.searchParams.entries()));
+      console.log(
+        "URL parameters:",
+        Object.fromEntries(stripeUrl.searchParams.entries())
+      );
 
       window.location.href = stripeUrl.toString();
     } catch (error) {
@@ -237,7 +247,10 @@ export default function Payment() {
 
         <div className="space-y-4">
           <button
-            onClick={() => redirectToStripeCheckout(user, profile)}
+            onClick={() => {
+              console.log("🔘 PAYMENT BUTTON CLICKED - About to call redirect function");
+              redirectToStripeCheckout(user, profile);
+            }}
             disabled={redirecting}
             className="w-full py-3 bg-[#d67635] hover:bg-[#c96528] rounded-md font-semibold text-white disabled:opacity-50"
           >
