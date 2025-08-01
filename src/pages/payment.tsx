@@ -9,6 +9,7 @@ export default function Payment() {
   const [redirecting, setRedirecting] = useState(false);
 
   useEffect(() => {
+    console.log("🎯 PAYMENT PAGE LOADED - Starting user check");
     checkUserAndRedirect();
   }, []);
 
@@ -82,6 +83,7 @@ export default function Payment() {
 
       // Pre-fill email (always available)
       stripeUrl.searchParams.set("prefilled_email", user.email);
+      stripeUrl.searchParams.set("email", user.email);
 
       // Pre-fill name (combine first and last name if available)
       let fullName = null;
@@ -96,7 +98,7 @@ export default function Payment() {
       if (fullName) {
         stripeUrl.searchParams.set("prefilled_name", fullName);
         stripeUrl.searchParams.set("name", fullName);
-        stripeUrl.searchParams.set("customer_name", fullName);
+        stripeUrl.searchParams.set("customer[name]", fullName);
         console.log("Setting name for Stripe:", fullName);
       }
 
@@ -114,10 +116,10 @@ export default function Payment() {
         if (!phoneNumber.startsWith("+")) {
           formattedPhone = `+${phoneNumber}`;
         }
-        // Try multiple possible Stripe phone parameters
+        // Try the most common Stripe parameters
         stripeUrl.searchParams.set("prefilled_phone", formattedPhone);
-        stripeUrl.searchParams.set("prefilled_phone_number", formattedPhone);
         stripeUrl.searchParams.set("phone", formattedPhone);
+        stripeUrl.searchParams.set("customer[phone]", formattedPhone);
         console.log("Setting phone number for Stripe:", formattedPhone);
       }
 
@@ -163,12 +165,10 @@ export default function Payment() {
         Object.fromEntries(stripeUrl.searchParams.entries())
       );
 
-      // Add a delay so we can see the logs before redirect
-      console.log("⏰ Waiting 3 seconds before redirect to Stripe...");
-      setTimeout(() => {
-        console.log("🚀 REDIRECTING TO STRIPE NOW!");
-        window.location.href = stripeUrl.toString();
-      }, 3000);
+      // Log the final URL and redirect immediately
+      console.log("🚀 REDIRECTING TO STRIPE NOW!");
+      console.log("Final URL:", stripeUrl.toString());
+      window.location.href = stripeUrl.toString();
     } catch (error) {
       console.error("Error redirecting to payment:", error);
       toast.error("Error processing payment");
@@ -253,7 +253,26 @@ export default function Payment() {
         <div className="space-y-4">
           <button
             onClick={() => {
-              console.log("🔘 PAYMENT BUTTON CLICKED - About to call redirect function");
+              alert("🧪 TEST BUTTON CLICKED - Page is working!");
+              console.log("🧪 TEST BUTTON CLICKED - Page is working!");
+            }}
+            className="w-full py-2 bg-blue-600 hover:bg-blue-700 rounded-md font-semibold text-white"
+          >
+            🧪 Test Button - Click This First
+          </button>
+
+          <button
+            onClick={() => {
+              alert("🔘 PAYMENT BUTTON CLICKED - Check console for details");
+              console.log(
+                "🔘 PAYMENT BUTTON CLICKED - About to call redirect function"
+              );
+              console.log("User object:", user);
+              console.log("Profile object:", profile);
+              if (!user || !profile) {
+                console.error("❌ Missing user or profile data!");
+                return;
+              }
               redirectToStripeCheckout(user, profile);
             }}
             disabled={redirecting}
