@@ -33,8 +33,10 @@ export default function Payment() {
 
       setProfile(profileData);
 
-      // Pre-populate Stripe checkout with user data
-      await redirectToStripeCheckout(user, profileData);
+      // Add a small delay to show the payment page before redirecting
+      setTimeout(() => {
+        redirectToStripeCheckout(user, profileData);
+      }, 2000);
     } catch (error) {
       console.error("Error loading user data:", error);
       toast.error("Error loading payment information");
@@ -47,44 +49,24 @@ export default function Payment() {
     setRedirecting(true);
     
     try {
-      // Create a custom Stripe checkout session with pre-filled data
-      const { data, error } = await supabase.functions.invoke('create-custom-checkout', {
-        body: {
-          email: user.email,
-          name: profile?.full_name || '',
-          phone: profile?.phone || '',
-          company: profile?.company_name || '',
-          userId: user.id,
-          successUrl: `${window.location.origin}/dashboard?payment=success`,
-          cancelUrl: `${window.location.origin}/dashboard?payment=cancelled`,
-        }
-      });
-
-      if (error) {
-        console.error("Error creating checkout session:", error);
-        // Fallback to direct Stripe link with query parameters
-        const stripeUrl = new URL("https://buy.stripe.com/fZu28s1KD7xmcrfdKJefC04");
-        stripeUrl.searchParams.set("prefilled_email", user.email);
-        if (profile?.full_name) {
-          stripeUrl.searchParams.set("prefilled_name", profile.full_name);
-        }
-        if (profile?.phone) {
-          stripeUrl.searchParams.set("prefilled_phone", profile.phone);
-        }
-        if (profile?.company_name) {
-          stripeUrl.searchParams.set("client_reference_id", profile.company_name);
-        }
-        
-        window.location.href = stripeUrl.toString();
-        return;
+      // Use direct Stripe URL with pre-filled parameters
+      const stripeUrl = new URL("https://buy.stripe.com/fZu28s1KD7xmcrfdKJefC04");
+      stripeUrl.searchParams.set("prefilled_email", user.email);
+      if (profile?.full_name) {
+        stripeUrl.searchParams.set("prefilled_name", profile.full_name);
       }
-
-      if (data?.url) {
-        window.location.href = data.url;
-      } else {
-        toast.error("Unable to create payment session");
-        setRedirecting(false);
+      if (profile?.phone) {
+        stripeUrl.searchParams.set("prefilled_phone", profile.phone);
       }
+      if (profile?.company_name) {
+        stripeUrl.searchParams.set("client_reference_id", profile.company_name);
+      }
+      
+      // Add success and cancel URLs
+      stripeUrl.searchParams.set("success_url", `${window.location.origin}/dashboard?payment=success`);
+      stripeUrl.searchParams.set("cancel_url", `${window.location.origin}/dashboard?payment=cancelled`);
+      
+      window.location.href = stripeUrl.toString();
     } catch (error) {
       console.error("Error redirecting to payment:", error);
       toast.error("Error processing payment");
