@@ -189,16 +189,44 @@ export default function SignupPage() {
         },
       });
 
+      console.log("Signup response:", { data, error: signUpError });
+
       // If signup successful, immediately sign in the user
       if (data.user && !signUpError) {
-        const { error: signInError } = await supabase.auth.signInWithPassword({
+        console.log("User created, attempting immediate sign in...");
+        
+        // Small delay to ensure user is created in database
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
           email: form.email,
           password: form.password,
         });
 
+        console.log("Sign in response:", { data: signInData, error: signInError });
+
         if (signInError) {
           console.log("Sign in error:", signInError);
-          // Continue anyway - the user was created
+          // Try alternative approach - create user directly in profiles table
+          console.log("Attempting to create user profile directly...");
+          
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert([
+              {
+                id: data.user.id,
+                email: form.email,
+                full_name: fullName,
+                phone: `${form.countryCode}${form.phone}`,
+                company_name: form.company,
+              }
+            ]);
+          
+          if (profileError) {
+            console.log("Profile creation error:", profileError);
+          } else {
+            console.log("Profile created successfully");
+          }
         } else {
           console.log("User signed in successfully after signup");
         }
