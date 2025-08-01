@@ -189,6 +189,21 @@ export default function SignupPage() {
         },
       });
 
+      // If signup successful, immediately sign in the user
+      if (data.user && !signUpError) {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: form.email,
+          password: form.password,
+        });
+
+        if (signInError) {
+          console.log("Sign in error:", signInError);
+          // Continue anyway - the user was created
+        } else {
+          console.log("User signed in successfully after signup");
+        }
+      }
+
       if (signUpError) {
         // Check if it's a duplicate email error
         if (signUpError.message.includes("already registered")) {
