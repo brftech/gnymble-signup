@@ -77,22 +77,42 @@ export default function Payment() {
 
     try {
       // Create Stripe checkout session with metadata
-      const response = await fetch('https://rndpcearcqnvrnjxabgq.supabase.co/functions/v1/create-checkout-session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          user_id: user.id,
-          email: user.email,
-          name: profile?.full_name || user?.user_metadata?.full_name,
-          phone: profile?.phone || user?.user_metadata?.phone,
-          company: profile?.company_name || user?.user_metadata?.company_name,
-        }),
-      });
+      const response = await fetch(
+        "https://rndpcearcqnvrnjxabgq.supabase.co/functions/v1/create-checkout-session",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            user_id: user.id,
+            email: user.email,
+            name: profile?.full_name || user?.user_metadata?.full_name,
+            phone: profile?.phone || user?.user_metadata?.phone,
+            company: profile?.company_name || user?.user_metadata?.company_name,
+          }),
+        }
+      );
 
-      const { url } = await response.json();
-      
+      console.log("Response status:", response.status);
+      console.log("Response headers:", response.headers);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Function error:", errorText);
+        throw new Error(`Function returned ${response.status}: ${errorText}`);
+      }
+
+      const responseData = await response.json();
+      console.log("Full response data:", responseData);
+
+      const { url } = responseData;
+
+      if (!url) {
+        console.error("No URL in response:", responseData);
+        throw new Error("No checkout URL received from function");
+      }
+
       console.log("Created Stripe session with metadata:", {
         user_id: user.id,
         email: user.email,

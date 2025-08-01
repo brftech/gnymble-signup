@@ -26,7 +26,7 @@ serve(async (req) => {
     });
 
     // Verify webhook signature
-    const event = stripe.webhooks.constructEvent(
+    const event = await stripe.webhooks.constructEventAsync(
       body,
       signature,
       Deno.env.get("STRIPE_WEBHOOK_SECRET") || ""
@@ -61,6 +61,15 @@ serve(async (req) => {
       const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
       // Update user profile with payment status
+      console.log("Attempting to update profile for user:", userId);
+      console.log("Update data:", {
+        payment_status: "paid",
+        stripe_customer_id: session.customer as string,
+        stripe_session_id: session.id,
+        payment_date: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+
       const { error: profileError } = await supabase
         .from("profiles")
         .update({
@@ -74,8 +83,12 @@ serve(async (req) => {
 
       if (profileError) {
         console.error("Error updating profile:", profileError);
+        console.error("Error details:", JSON.stringify(profileError));
         return new Response(
-          JSON.stringify({ error: "Failed to update profile" }),
+          JSON.stringify({
+            error: "Failed to update profile",
+            details: profileError,
+          }),
           {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
             status: 500,
