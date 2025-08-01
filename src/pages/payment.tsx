@@ -20,6 +20,7 @@ export default function Payment() {
       } = await supabase.auth.getUser();
 
       console.log("User data:", user);
+      console.log("User metadata:", user?.user_metadata);
 
       if (!user) {
         console.log("No user found, redirecting to login");
@@ -43,6 +44,7 @@ export default function Payment() {
       }
 
       console.log("Profile data:", profileData);
+      console.log("Profile phone:", profileData?.phone);
       setProfile(profileData);
 
       // Don't auto-redirect - let user choose when to proceed
@@ -91,8 +93,11 @@ export default function Payment() {
         if (!phoneNumber.startsWith("+")) {
           formattedPhone = `+${phoneNumber}`;
         }
+        // Try both possible Stripe phone parameters
         stripeUrl.searchParams.set("prefilled_phone", formattedPhone);
+        stripeUrl.searchParams.set("prefilled_phone_number", formattedPhone);
         console.log("Setting phone number for Stripe:", formattedPhone);
+        console.log("Full Stripe URL:", stripeUrl.toString());
       }
 
       // Pre-fill company name (using client_reference_id for company)
