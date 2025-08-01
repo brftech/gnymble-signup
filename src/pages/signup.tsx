@@ -7,16 +7,55 @@ export default function SignupPage() {
     firstName: "",
     lastName: "",
     email: "",
+    phone: "",
     company: "",
     password: "",
+    confirmPassword: "",
   });
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
+
+  // Password validation
+  const validatePassword = (password: string) => {
+    const minLength = 8;
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumbers = /\d/.test(password);
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+    return {
+      isValid:
+        password.length >= minLength &&
+        hasUpperCase &&
+        hasLowerCase &&
+        hasNumbers &&
+        hasSpecialChar,
+      minLength: password.length >= minLength,
+      hasUpperCase,
+      hasLowerCase,
+      hasNumbers,
+      hasSpecialChar,
+    };
+  };
+
+  const passwordValidation = validatePassword(form.password);
+  const passwordsMatch = form.password === form.confirmPassword;
+
+  // Phone number validation
+  const validatePhone = (phone: string) => {
+    // Remove all non-digit characters for validation
+    const digitsOnly = phone.replace(/\D/g, "");
+    return digitsOnly.length >= 10 && digitsOnly.length <= 15;
+  };
+
+  const phoneValidation = validatePhone(form.phone);
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
@@ -35,21 +74,50 @@ export default function SignupPage() {
     setLoading(true);
     setError("");
 
+    // Validate password requirements
+    if (!passwordValidation.isValid) {
+      toast.error("Please ensure your password meets all requirements.");
+      setError("Password requirements not met");
+      setLoading(false);
+      return;
+    }
+
+    // Validate password confirmation
+    if (!passwordsMatch) {
+      toast.error("Passwords do not match.");
+      setError("Passwords do not match");
+      setLoading(false);
+      return;
+    }
+
+    // Validate phone number
+    if (!phoneValidation) {
+      toast.error("Please enter a valid phone number.");
+      setError("Invalid phone number");
+      setLoading(false);
+      return;
+    }
+
     const fullName = `${form.firstName} ${form.lastName}`.trim();
 
     try {
-      // Check if user already exists by looking up the email
-      const { data: existingUsers } = await supabase
+      // Check if user already exists by looking up the email in profiles table
+      const { data: existingProfile } = await supabase
         .from("profiles")
-        .select("email")
+        .select("id, email")
         .eq("email", form.email)
         .single();
 
-      if (existingUsers) {
+      if (existingProfile) {
         toast.error(
-          "An account with this email already exists. Please log in instead."
+          "An account with this email already exists. Redirecting to your dashboard..."
         );
         setError("Account already exists");
+        // Redirect to dashboard after a short delay
+        setTimeout(() => {
+          window.location.href = "/dashboard";
+        }, 2000);
+        setLoading(false);
         return;
       }
 
@@ -61,6 +129,7 @@ export default function SignupPage() {
           data: {
             full_name: fullName,
             company_name: form.company,
+            phone: form.phone,
           },
         },
       });
@@ -69,9 +138,13 @@ export default function SignupPage() {
         // Check if it's a duplicate email error
         if (signUpError.message.includes("already registered")) {
           toast.error(
-            "An account with this email already exists. Please log in instead."
+            "An account with this email already exists. Redirecting to your dashboard..."
           );
           setError("Account already exists");
+          // Redirect to dashboard after a short delay
+          setTimeout(() => {
+            window.location.href = "/dashboard";
+          }, 2000);
         } else {
           toast.error(signUpError.message);
           setError(signUpError.message);
@@ -88,7 +161,7 @@ export default function SignupPage() {
         setTimeout(() => {
           // Redirect to Stripe checkout after successful signup
           window.location.href =
-            "https://buy.stripe.com/6oU5kE2OHaJy76V4a9efC03";
+            "https://buy.stripe.com/fZu28s1KD7xmcrfdKJefC04";
         }, 2000); // 2 second delay
       }
     } catch (error: unknown) {
@@ -157,6 +230,22 @@ export default function SignupPage() {
           />
 
           <input
+            name="phone"
+            type="tel"
+            placeholder="Cell Phone Number"
+            onChange={handleChange}
+            value={form.phone}
+            required
+            className={`w-full p-3 rounded-md bg-gray-900 border focus:outline-none focus:ring-2 focus:ring-[#d67635] ${
+              form.phone
+                ? phoneValidation
+                  ? "border-green-500"
+                  : "border-red-500"
+                : "border-gray-700"
+            }`}
+          />
+
+          <input
             name="company"
             placeholder="Company Name"
             onChange={handleChange}
@@ -165,20 +254,152 @@ export default function SignupPage() {
             className="w-full p-3 rounded-md bg-gray-900 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#d67635]"
           />
 
-          <input
-            name="password"
-            type="password"
-            placeholder="Password"
-            onChange={handleChange}
-            value={form.password}
-            required
-            className="w-full p-3 rounded-md bg-gray-900 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#d67635]"
-          />
+          {/* Phone validation indicator */}
+          {form.phone && (
+            <div
+              className={`text-xs flex items-center gap-2 ${
+                phoneValidation ? "text-green-400" : "text-red-400"
+              }`}
+            >
+              <span>{phoneValidation ? "✓" : "✗"}</span>
+              <span>
+                {phoneValidation
+                  ? "Valid phone number"
+                  : "Please enter a valid phone number (10-15 digits)"}
+              </span>
+            </div>
+          )}
+
+          {/* Password field with show/hide toggle */}
+          <div className="relative">
+            <input
+              name="password"
+              type={showPassword ? "text" : "password"}
+              placeholder="Password"
+              onChange={handleChange}
+              value={form.password}
+              required
+              className="w-full p-3 pr-12 rounded-md bg-gray-900 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#d67635]"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+            >
+              {showPassword ? "Hide" : "Show"}
+            </button>
+          </div>
+
+          {/* Password requirements */}
+          {form.password && (
+            <div className="text-xs space-y-1">
+              <p className="text-gray-400 font-medium">
+                Password requirements:
+              </p>
+              <div className="space-y-1">
+                <div
+                  className={`flex items-center gap-2 ${
+                    passwordValidation.minLength
+                      ? "text-green-400"
+                      : "text-red-400"
+                  }`}
+                >
+                  <span>{passwordValidation.minLength ? "✓" : "✗"}</span>
+                  <span>At least 8 characters</span>
+                </div>
+                <div
+                  className={`flex items-center gap-2 ${
+                    passwordValidation.hasUpperCase
+                      ? "text-green-400"
+                      : "text-red-400"
+                  }`}
+                >
+                  <span>{passwordValidation.hasUpperCase ? "✓" : "✗"}</span>
+                  <span>One uppercase letter</span>
+                </div>
+                <div
+                  className={`flex items-center gap-2 ${
+                    passwordValidation.hasLowerCase
+                      ? "text-green-400"
+                      : "text-red-400"
+                  }`}
+                >
+                  <span>{passwordValidation.hasLowerCase ? "✓" : "✗"}</span>
+                  <span>One lowercase letter</span>
+                </div>
+                <div
+                  className={`flex items-center gap-2 ${
+                    passwordValidation.hasNumbers
+                      ? "text-green-400"
+                      : "text-red-400"
+                  }`}
+                >
+                  <span>{passwordValidation.hasNumbers ? "✓" : "✗"}</span>
+                  <span>One number</span>
+                </div>
+                <div
+                  className={`flex items-center gap-2 ${
+                    passwordValidation.hasSpecialChar
+                      ? "text-green-400"
+                      : "text-red-400"
+                  }`}
+                >
+                  <span>{passwordValidation.hasSpecialChar ? "✓" : "✗"}</span>
+                  <span>One special character</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Confirm Password field */}
+          <div className="relative">
+            <input
+              name="confirmPassword"
+              type={showConfirmPassword ? "text" : "password"}
+              placeholder="Confirm Password"
+              onChange={handleChange}
+              value={form.confirmPassword}
+              required
+              className={`w-full p-3 pr-12 rounded-md bg-gray-900 border focus:outline-none focus:ring-2 focus:ring-[#d67635] ${
+                form.confirmPassword
+                  ? passwordsMatch
+                    ? "border-green-500"
+                    : "border-red-500"
+                  : "border-gray-700"
+              }`}
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+            >
+              {showConfirmPassword ? "Hide" : "Show"}
+            </button>
+          </div>
+
+          {/* Password match indicator */}
+          {form.confirmPassword && (
+            <div
+              className={`text-xs flex items-center gap-2 ${
+                passwordsMatch ? "text-green-400" : "text-red-400"
+              }`}
+            >
+              <span>{passwordsMatch ? "✓" : "✗"}</span>
+              <span>
+                {passwordsMatch ? "Passwords match" : "Passwords do not match"}
+              </span>
+            </div>
+          )}
 
           <button
             type="submit"
-            disabled={loading}
-            className="w-full py-3 bg-[#d67635] hover:bg-[#c96528] rounded-md font-semibold text-white disabled:opacity-50"
+            disabled={
+              loading ||
+              !passwordValidation.isValid ||
+              !passwordsMatch ||
+              !phoneValidation
+            }
+            className="w-full py-3 bg-[#d67635] hover:bg-[#c96528] rounded-md font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? "Signing up..." : "Sign Up with Email"}
           </button>

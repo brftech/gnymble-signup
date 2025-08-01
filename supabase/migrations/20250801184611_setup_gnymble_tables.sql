@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email TEXT NOT NULL,
   full_name TEXT,
+  phone TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -14,7 +15,11 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
 -- 2. Create user roles system
-CREATE TYPE IF NOT EXISTS public.app_role AS ENUM ('admin', 'customer', 'user');
+DO $$ BEGIN
+    CREATE TYPE public.app_role AS ENUM ('admin', 'customer', 'user');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 CREATE TABLE IF NOT EXISTS public.user_roles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -44,7 +49,11 @@ CREATE TABLE IF NOT EXISTS public.companies (
 ALTER TABLE public.companies ENABLE ROW LEVEL SECURITY;
 
 -- 4. Create user_company_roles junction table for many-to-many relationship
-CREATE TYPE IF NOT EXISTS public.company_role AS ENUM ('owner', 'admin', 'member', 'viewer');
+DO $$ BEGIN
+    CREATE TYPE public.company_role AS ENUM ('owner', 'admin', 'member', 'viewer');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 CREATE TABLE IF NOT EXISTS public.user_company_roles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -122,11 +131,12 @@ DECLARE
   company_name TEXT;
 BEGIN
   -- Create profile
-  INSERT INTO public.profiles (id, email, full_name)
+  INSERT INTO public.profiles (id, email, full_name, phone)
   VALUES (
     NEW.id, 
     NEW.email,
-    COALESCE(NEW.raw_user_meta_data ->> 'full_name', NEW.raw_user_meta_data ->> 'name')
+    COALESCE(NEW.raw_user_meta_data ->> 'full_name', NEW.raw_user_meta_data ->> 'name'),
+    NEW.raw_user_meta_data ->> 'phone'
   );
   
   -- Assign default 'user' role
@@ -165,6 +175,15 @@ CREATE TRIGGER on_auth_user_created
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 -- 7. Set up Row Level Security policies
+
+-- Drop existing policies first to avoid conflicts
+DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Users can view own roles" ON public.user_roles;
+DROP POLICY IF EXISTS "Users can view their companies" ON public.companies;
+DROP POLICY IF EXISTS "Company owners can update their companies" ON public.companies;
+DROP POLICY IF EXISTS "Users can view their company roles" ON public.user_company_roles;
+DROP POLICY IF EXISTS "Company owners can manage company members" ON public.user_company_roles;
 
 -- Profiles policies
 CREATE POLICY "Users can view own profile" ON public.profiles
@@ -215,3 +234,4 @@ CREATE INDEX IF NOT EXISTS idx_companies_name ON public.companies(name);
 CREATE INDEX IF NOT EXISTS idx_user_company_roles_user_id ON public.user_company_roles(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_company_roles_company_id ON public.user_company_roles(company_id);
 CREATE INDEX IF NOT EXISTS idx_user_company_roles_primary ON public.user_company_roles(user_id, is_primary) WHERE is_primary = true;
+`
