@@ -188,12 +188,19 @@ export default function SignupPage() {
       }
 
       if (data.user) {
+        console.log("User created successfully:", data.user);
+        
+        // Check if we have a session
+        const { data: sessionData } = await supabase.auth.getSession();
+        console.log("Session data:", sessionData);
+        
         toast.success(
           "Account created successfully! Redirecting to checkout..."
         );
 
         // Add a delay to show the toast before redirecting
         setTimeout(() => {
+          console.log("Redirecting to payment page...");
           // Redirect to custom payment page
           window.location.href = "/payment";
         }, 2000); // 2 second delay

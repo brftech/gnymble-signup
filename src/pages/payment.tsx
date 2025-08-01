@@ -14,9 +14,15 @@ export default function Payment() {
 
   const checkUserAndRedirect = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
+      console.log("Checking user authentication...");
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      console.log("User data:", user);
+
       if (!user) {
+        console.log("No user found, redirecting to login");
         toast.error("Please log in to access payment");
         window.location.href = "/login";
         return;
@@ -25,12 +31,18 @@ export default function Payment() {
       setUser(user);
 
       // Load user profile
-      const { data: profileData } = await supabase
+      console.log("Loading user profile...");
+      const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", user.id)
         .single();
 
+      if (profileError) {
+        console.error("Profile error:", profileError);
+      }
+
+      console.log("Profile data:", profileData);
       setProfile(profileData);
 
       // Add a small delay to show the payment page before redirecting
@@ -47,10 +59,12 @@ export default function Payment() {
 
   const redirectToStripeCheckout = async (user: any, profile: any) => {
     setRedirecting(true);
-    
+
     try {
       // Use direct Stripe URL with pre-filled parameters
-      const stripeUrl = new URL("https://buy.stripe.com/fZu28s1KD7xmcrfdKJefC04");
+      const stripeUrl = new URL(
+        "https://buy.stripe.com/fZu28s1KD7xmcrfdKJefC04"
+      );
       stripeUrl.searchParams.set("prefilled_email", user.email);
       if (profile?.full_name) {
         stripeUrl.searchParams.set("prefilled_name", profile.full_name);
@@ -61,11 +75,17 @@ export default function Payment() {
       if (profile?.company_name) {
         stripeUrl.searchParams.set("client_reference_id", profile.company_name);
       }
-      
+
       // Add success and cancel URLs
-      stripeUrl.searchParams.set("success_url", `${window.location.origin}/dashboard?payment=success`);
-      stripeUrl.searchParams.set("cancel_url", `${window.location.origin}/dashboard?payment=cancelled`);
-      
+      stripeUrl.searchParams.set(
+        "success_url",
+        `${window.location.origin}/dashboard?payment=success`
+      );
+      stripeUrl.searchParams.set(
+        "cancel_url",
+        `${window.location.origin}/dashboard?payment=cancelled`
+      );
+
       window.location.href = stripeUrl.toString();
     } catch (error) {
       console.error("Error redirecting to payment:", error);
@@ -95,7 +115,9 @@ export default function Payment() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#d67635] mx-auto mb-4"></div>
           <p>Redirecting to secure payment...</p>
-          <p className="text-sm text-gray-400 mt-2">Please wait while we set up your payment session</p>
+          <p className="text-sm text-gray-400 mt-2">
+            Please wait while we set up your payment session
+          </p>
         </div>
       </div>
     );
@@ -107,7 +129,7 @@ export default function Payment() {
         <h1 className="text-3xl font-bold">
           Complete Your <span className="text-[#d67635]">G</span>nymble Setup
         </h1>
-        
+
         <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 text-left">
           <h3 className="text-lg font-semibold mb-4">Payment Details</h3>
           <div className="space-y-3 text-sm">
@@ -135,7 +157,9 @@ export default function Payment() {
         </div>
 
         <div className="bg-blue-900/20 border border-blue-800 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-blue-400 mb-4">What's Included</h3>
+          <h3 className="text-lg font-semibold text-blue-400 mb-4">
+            What's Included
+          </h3>
           <div className="space-y-3 text-sm text-gray-300">
             <p>✓ Personal consultation and platform setup</p>
             <p>✓ SMS automation strategy development</p>
@@ -152,7 +176,7 @@ export default function Payment() {
           >
             {redirecting ? "Processing..." : "Complete Payment - $179"}
           </button>
-          
+
           <button
             onClick={handleBackToDashboard}
             className="w-full py-2 text-gray-400 hover:text-white border border-gray-700 rounded-md hover:border-gray-600"
@@ -167,4 +191,4 @@ export default function Payment() {
       </div>
     </div>
   );
-} 
+}
