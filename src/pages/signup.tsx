@@ -19,7 +19,9 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
@@ -192,9 +194,8 @@ export default function SignupPage() {
 
         // Add a delay to show the toast before redirecting
         setTimeout(() => {
-          // Redirect to Stripe checkout after successful signup
-          window.location.href =
-            "https://buy.stripe.com/fZu28s1KD7xmcrfdKJefC04";
+          // Redirect to custom payment page
+          window.location.href = "/payment";
         }, 2000); // 2 second delay
       }
     } catch (error: unknown) {
@@ -261,8 +262,6 @@ export default function SignupPage() {
             required
             className="w-full p-3 rounded-md bg-gray-900 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#d67635]"
           />
-
-
 
           {/* Phone field with country code */}
           <div className="flex gap-2">

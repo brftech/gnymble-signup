@@ -59,7 +59,23 @@ export default function Dashboard() {
 
   useEffect(() => {
     checkUser();
+    checkPaymentStatus();
   }, []);
+
+  const checkPaymentStatus = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentStatus = urlParams.get('payment');
+    
+    if (paymentStatus === 'success') {
+      toast.success('Payment completed successfully! Welcome to Gnymble!');
+      // Clear the URL parameter
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (paymentStatus === 'cancelled') {
+      toast.error('Payment was cancelled. You can try again anytime.');
+      // Clear the URL parameter
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  };
 
   const checkUser = async () => {
     try {
@@ -109,7 +125,7 @@ export default function Dashboard() {
   };
 
   const handlePayment = () => {
-    window.location.href = "https://buy.stripe.com/fZu28s1KD7xmcrfdKJefC04";
+    window.location.href = "/payment";
   };
 
   const handleLogout = async () => {
