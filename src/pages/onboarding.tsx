@@ -9,6 +9,7 @@ import {
   submitCampaignApproval, 
   transformOnboardingDataToTCR 
 } from "../lib/tcrApi";
+import { testDatabaseConnection } from "../lib/testDatabase";
 
 export default function Onboarding() {
   const [currentStep, setCurrentStep] = useState<
@@ -336,6 +337,18 @@ export default function Onboarding() {
     navigate("/dashboard");
   };
 
+  const handleTestDatabase = async () => {
+    console.log("🧪 Testing database connection...");
+    const result = await testDatabaseConnection();
+    console.log("Database test result:", result);
+    
+    if (result.success) {
+      toast.success("Database connection test passed!");
+    } else {
+      toast.error(`Database test failed: ${result.error?.message || 'Unknown error'}`);
+    }
+  };
+
   if (!profile) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
@@ -638,13 +651,20 @@ export default function Onboarding() {
               </div>
             </div>
 
-            <div className="mt-8">
+            <div className="mt-8 space-y-4">
               <Button
                 onClick={handleBrandVerification}
                 disabled={loading}
                 className="w-full py-3 bg-primary hover:bg-primary-glow text-primary-foreground font-semibold disabled:opacity-50 transition-colors"
               >
                 {loading ? "Verifying Brand..." : "Submit Brand Verification"}
+              </Button>
+              
+              <Button
+                onClick={handleTestDatabase}
+                className="w-full py-2 bg-gray-700 hover:bg-gray-600 text-white font-medium transition-colors"
+              >
+                Test Database Connection
               </Button>
             </div>
           </div>
