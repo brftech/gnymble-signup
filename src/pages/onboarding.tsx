@@ -4,10 +4,10 @@ import { supabase } from "../lib/supabaseClient";
 import { toast } from "sonner";
 import { Button } from "../components/ui/button";
 import type { OnboardingData, UserProfile } from "../types/database";
-import { 
-  submitBrandVerification, 
-  submitCampaignApproval, 
-  transformOnboardingDataToTCR 
+import {
+  submitBrandVerification,
+  submitCampaignApproval,
+  transformOnboardingDataToTCR,
 } from "../lib/tcrApi";
 import { testDatabaseConnection } from "../lib/testDatabase";
 
@@ -170,7 +170,7 @@ export default function Onboarding() {
           user_id: user.id,
           company_id: profile.company_id,
           submission_data: formData,
-          status: tcrResponse.status === 'APPROVED' ? 'approved' : 'submitted',
+          status: tcrResponse.status === "APPROVED" ? "approved" : "submitted",
           tcr_brand_id: tcrResponse.brandId,
         });
 
@@ -184,8 +184,10 @@ export default function Onboarding() {
         .from("companies")
         .update({
           tcr_brand_id: tcrResponse.brandId,
-          brand_verification_status: tcrResponse.status === 'APPROVED' ? 'approved' : 'submitted',
-          brand_verification_date: tcrResponse.status === 'APPROVED' ? new Date().toISOString() : null,
+          brand_verification_status:
+            tcrResponse.status === "APPROVED" ? "approved" : "submitted",
+          brand_verification_date:
+            tcrResponse.status === "APPROVED" ? new Date().toISOString() : null,
           updated_at: new Date().toISOString(),
         })
         .eq("id", profile.company_id);
@@ -196,7 +198,11 @@ export default function Onboarding() {
       }
 
       console.log("Brand verification submitted successfully:", formData);
-      toast.success(`Brand verification ${tcrResponse.status === 'APPROVED' ? 'approved' : 'submitted'} to TCR!`);
+      toast.success(
+        `Brand verification ${
+          tcrResponse.status === "APPROVED" ? "approved" : "submitted"
+        } to TCR!`
+      );
       setCurrentStep("campaign");
     } catch (error) {
       console.error("Brand verification error:", error);
@@ -238,13 +244,15 @@ export default function Onboarding() {
         .single();
 
       if (!submission?.tcr_brand_id) {
-        throw new Error("No TCR brand ID found. Please complete brand verification first.");
+        throw new Error(
+          "No TCR brand ID found. Please complete brand verification first."
+        );
       }
 
       // Submit campaign to TCR
       const { campaignRequest } = transformOnboardingDataToTCR(formData);
       campaignRequest.brandId = submission.tcr_brand_id;
-      
+
       const tcrCampaignResponse = await submitCampaignApproval(campaignRequest);
       console.log("TCR Campaign Response:", tcrCampaignResponse);
 
@@ -276,8 +284,14 @@ export default function Onboarding() {
           campaign_name: `${formData.legal_company_name} - Default Campaign`,
           description: "Default campaign created during onboarding",
           use_case: "General business communications",
-          campaign_approval_status: tcrCampaignResponse.status === 'APPROVED' ? 'approved' : 'submitted',
-          campaign_approval_date: tcrCampaignResponse.status === 'APPROVED' ? new Date().toISOString() : null,
+          campaign_approval_status:
+            tcrCampaignResponse.status === "APPROVED"
+              ? "approved"
+              : "submitted",
+          campaign_approval_date:
+            tcrCampaignResponse.status === "APPROVED"
+              ? new Date().toISOString()
+              : null,
           tcr_campaign_id: tcrCampaignResponse.campaignId,
         })
         .select()
@@ -307,7 +321,10 @@ export default function Onboarding() {
       const { error: submissionUpdateError } = await supabase
         .from("onboarding_submissions")
         .update({
-          status: tcrCampaignResponse.status === 'APPROVED' ? 'approved' : 'submitted',
+          status:
+            tcrCampaignResponse.status === "APPROVED"
+              ? "approved"
+              : "submitted",
           tcr_campaign_id: tcrCampaignResponse.campaignId,
           processed_at: new Date().toISOString(),
         })
@@ -321,8 +338,16 @@ export default function Onboarding() {
         throw submissionUpdateError;
       }
 
-      console.log("Onboarding completed successfully:", { brand, campaign, tcrResponse: tcrCampaignResponse });
-      toast.success(`Onboarding completed! Campaign ${tcrCampaignResponse.status === 'APPROVED' ? 'approved' : 'submitted'} to TCR.`);
+      console.log("Onboarding completed successfully:", {
+        brand,
+        campaign,
+        tcrResponse: tcrCampaignResponse,
+      });
+      toast.success(
+        `Onboarding completed! Campaign ${
+          tcrCampaignResponse.status === "APPROVED" ? "approved" : "submitted"
+        } to TCR.`
+      );
       setCurrentStep("complete");
     } catch (error) {
       console.error("Onboarding completion error:", error);
@@ -341,11 +366,15 @@ export default function Onboarding() {
     console.log("🧪 Testing database connection...");
     const result = await testDatabaseConnection();
     console.log("Database test result:", result);
-    
+
     if (result.success) {
       toast.success("Database connection test passed!");
     } else {
-      toast.error(`Database test failed: ${result.error ? String(result.error) : 'Unknown error'}`);
+      toast.error(
+        `Database test failed: ${
+          result.error ? String(result.error) : "Unknown error"
+        }`
+      );
     }
   };
 
@@ -659,7 +688,7 @@ export default function Onboarding() {
               >
                 {loading ? "Verifying Brand..." : "Submit Brand Verification"}
               </Button>
-              
+
               <Button
                 onClick={handleTestDatabase}
                 className="w-full py-2 bg-gray-700 hover:bg-gray-600 text-white font-medium transition-colors"

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "../lib/supabaseClient";
+import { testWebhookLogic } from "../lib/testWebhook";
 
 interface UserProfile {
   id: string;
@@ -166,6 +167,24 @@ export default function Dashboard() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     window.location.href = "/login";
+  };
+
+  const handleTestWebhook = async () => {
+    if (!user) {
+      toast.error("No user found");
+      return;
+    }
+    
+    console.log("🧪 Testing webhook logic for user:", user.id);
+    const result = await testWebhookLogic(user.id);
+    
+    if (result.success) {
+      toast.success("Webhook test successful! Check console for details.");
+      console.log("✅ Webhook test result:", result);
+    } else {
+      toast.error(`Webhook test failed: ${result.error?.message || 'Unknown error'}`);
+      console.error("❌ Webhook test error:", result.error);
+    }
   };
 
   if (loading) {
@@ -399,12 +418,19 @@ export default function Dashboard() {
                 <p>2. Complete brand verification (TCR compliance)</p>
                 <p>3. Get campaign approval for SMS messaging</p>
                 <p>4. Access your Gnymble dashboard and start messaging</p>
-                <div className="mt-4">
+                <div className="mt-4 space-y-3">
                   <button
                     onClick={handleOnboarding}
                     className="bg-[#d67635] hover:bg-[#c96528] px-6 py-3 rounded-md font-semibold text-white transition-colors"
                   >
                     Start Onboarding Process →
+                  </button>
+                  
+                  <button
+                    onClick={handleTestWebhook}
+                    className="bg-gray-700 hover:bg-gray-600 px-6 py-3 rounded-md font-medium text-white transition-colors"
+                  >
+                    Test Webhook Logic (Debug)
                   </button>
                 </div>
               </>
