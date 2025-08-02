@@ -81,7 +81,7 @@ export interface OnboardingSubmission {
   id: string;
   user_id: string;
   company_id: string;
-  submission_data: Record<string, any>;
+  submission_data: Record<string, string | number | boolean | null | undefined>;
   status?: "submitted" | "processing" | "approved" | "rejected";
   tcr_brand_id?: string;
   tcr_campaign_id?: string;

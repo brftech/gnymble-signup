@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import { toast } from "sonner";
@@ -44,11 +44,7 @@ export default function Onboarding() {
   });
   const navigate = useNavigate();
 
-  useEffect(() => {
-    loadUserProfile();
-  }, []);
-
-  const loadUserProfile = async () => {
+  const loadUserProfile = useCallback(async () => {
     try {
       const {
         data: { user },
@@ -85,7 +81,11 @@ export default function Onboarding() {
       console.error("Error loading profile:", error);
       toast.error("Error loading profile");
     }
-  };
+  }, [navigate]);
+
+  useEffect(() => {
+    loadUserProfile();
+  }, [loadUserProfile]);
 
   const handleBrandVerification = async () => {
     setLoading(true);

@@ -238,7 +238,29 @@ export async function checkCampaignStatus(
 }
 
 // Helper function to transform our onboarding data to TCR format
-export function transformOnboardingDataToTCR(onboardingData: any): {
+export function transformOnboardingDataToTCR(onboardingData: {
+  legal_company_name: string;
+  dba_brand_name?: string;
+  country_of_registration?: string;
+  tax_number_ein: string;
+  tax_issuing_country?: string;
+  address_street: string;
+  city: string;
+  state_region: string;
+  postal_code: string;
+  country?: string;
+  website?: string;
+  vertical_type?: string;
+  legal_form?: string;
+  business_phone: string;
+  first_name: string;
+  last_name: string;
+  support_email?: string;
+  point_of_contact_email?: string;
+  mobile_phone?: string;
+  reference_id?: string;
+  duns_giin_lei?: string;
+}): {
   brandRequest: TCRBrandRequest;
   campaignRequest: TCRCampaignRequest;
 } {

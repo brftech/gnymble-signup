@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
 import { supabase } from "../lib/supabaseClient";
 import { testWebhookLogic } from "../lib/testWebhook";
@@ -60,6 +60,26 @@ export default function Dashboard() {
     },
   ];
 
+  const checkPaymentStatus = useCallback(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentStatus = urlParams.get("payment");
+
+    if (paymentStatus === "success") {
+      toast.success("Payment completed successfully! Welcome to Gnymble!");
+      // Clear the URL parameter
+      window.history.replaceState({}, document.title, window.location.pathname);
+
+      // Refresh the profile immediately
+      if (user) {
+        loadUserProfile(user.id);
+      }
+    } else if (paymentStatus === "cancelled") {
+      toast.error("Payment was cancelled. You can try again anytime.");
+      // Clear the URL parameter
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [user]);
+
   useEffect(() => {
     const initializeDashboard = async () => {
       try {
@@ -103,27 +123,7 @@ export default function Dashboard() {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
-
-  const checkPaymentStatus = () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const paymentStatus = urlParams.get("payment");
-
-    if (paymentStatus === "success") {
-      toast.success("Payment completed successfully! Welcome to Gnymble!");
-      // Clear the URL parameter
-      window.history.replaceState({}, document.title, window.location.pathname);
-
-      // Refresh the profile immediately
-      if (user) {
-        loadUserProfile(user.id);
-      }
-    } else if (paymentStatus === "cancelled") {
-      toast.error("Payment was cancelled. You can try again anytime.");
-      // Clear the URL parameter
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
-  };
+  }, [checkPaymentStatus]);
 
   const loadUserProfile = async (userId: string) => {
     console.log("👤 Loading profile for user:", userId);
@@ -175,15 +175,19 @@ export default function Dashboard() {
       toast.error("No user found");
       return;
     }
-    
+
     console.log("🧪 Testing webhook logic for user:", user.id);
     const result = await testWebhookLogic(user.id);
-    
+
     if (result.success) {
       toast.success("Webhook test successful! Check console for details.");
       console.log("✅ Webhook test result:", result);
     } else {
-      toast.error(`Webhook test failed: ${result.error ? String(result.error) : 'Unknown error'}`);
+      toast.error(
+        `Webhook test failed: ${
+          result.error ? String(result.error) : "Unknown error"
+        }`
+      );
       console.error("❌ Webhook test error:", result.error);
     }
   };
@@ -191,12 +195,16 @@ export default function Dashboard() {
   const handleTestDatabaseSimple = async () => {
     console.log("🧪 Testing simple database operations...");
     const result = await testDatabaseSimple();
-    
+
     if (result.success) {
       toast.success("Database test successful! RLS is disabled.");
       console.log("✅ Database test result:", result);
     } else {
-      toast.error(`Database test failed: ${result.error ? String(result.error) : 'Unknown error'}`);
+      toast.error(
+        `Database test failed: ${
+          result.error ? String(result.error) : "Unknown error"
+        }`
+      );
       console.error("❌ Database test error:", result.error);
     }
   };
@@ -439,14 +447,14 @@ export default function Dashboard() {
                   >
                     Start Onboarding Process →
                   </button>
-                  
+
                   <button
                     onClick={handleTestWebhook}
                     className="bg-gray-700 hover:bg-gray-600 px-6 py-3 rounded-md font-medium text-white transition-colors"
                   >
                     Test Webhook Logic (Debug)
                   </button>
-                  
+
                   <button
                     onClick={handleTestDatabaseSimple}
                     className="bg-blue-700 hover:bg-blue-600 px-6 py-3 rounded-md font-medium text-white transition-colors"

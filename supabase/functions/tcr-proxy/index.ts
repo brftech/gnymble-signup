@@ -86,7 +86,44 @@ serve(async (req) => {
   }
 });
 
-async function handleBrandSubmission(brandData: any) {
+interface TCRBrandData {
+  brandId?: string;
+  brandName: string;
+  dbaName?: string;
+  countryOfRegistration: string;
+  taxNumber: string;
+  taxIssuingCountry: string;
+  address: {
+    street: string;
+    city: string;
+    stateRegion: string;
+    postalCode: string;
+    country: string;
+  };
+  website?: string;
+  verticalType: string;
+  legalForm: string;
+  businessPhone: string;
+  pointOfContact: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+  };
+}
+
+interface TCRCampaignData {
+  campaignId?: string;
+  brandId: string;
+  campaignName: string;
+  description?: string;
+  useCase: string;
+  verticalType: string;
+  referenceId?: string;
+  dunsGiinLei?: string;
+}
+
+async function handleBrandSubmission(brandData: TCRBrandData) {
   try {
     console.log("🚀 Submitting brand verification to TCR:", brandData);
 
@@ -137,7 +174,7 @@ async function handleBrandSubmission(brandData: any) {
   }
 }
 
-async function handleCampaignSubmission(campaignData: any) {
+async function handleCampaignSubmission(campaignData: TCRCampaignData) {
   try {
     console.log("🚀 Submitting campaign approval to TCR:", campaignData);
 

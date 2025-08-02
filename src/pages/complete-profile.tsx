@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import { toast } from "sonner";
@@ -24,11 +24,7 @@ export default function CompleteProfile() {
   });
   const navigate = useNavigate();
 
-  useEffect(() => {
-    loadProfile();
-  }, []);
-
-  const loadProfile = async () => {
+  const loadProfile = useCallback(async () => {
     try {
       const {
         data: { user },
@@ -55,7 +51,11 @@ export default function CompleteProfile() {
       console.error("Error loading profile:", error);
       toast.error("Error loading profile");
     }
-  };
+  }, [navigate]);
+
+  useEffect(() => {
+    loadProfile();
+  }, [loadProfile]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,8 +73,6 @@ export default function CompleteProfile() {
       if (!formData.company_name.trim()) {
         throw new Error("Company name is required");
       }
-
-
 
       const {
         data: { user },
@@ -205,8 +203,6 @@ export default function CompleteProfile() {
                 required
               />
             </div>
-
-
 
             <Button
               type="submit"

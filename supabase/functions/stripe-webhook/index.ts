@@ -202,10 +202,8 @@ serve(async (req) => {
         .eq("customer_id", customerData.id)
         .single();
 
-      let subscriptionData;
       if (existingSubscription) {
         console.log("✅ Subscription already exists:", existingSubscription);
-        subscriptionData = existingSubscription;
       } else {
         console.log("📦 Creating subscription record...");
         const subscriptionInsertData = {
@@ -237,7 +235,6 @@ serve(async (req) => {
           );
         } else {
           console.log("✅ Created subscription:", newSubscription);
-          subscriptionData = newSubscription;
         }
       }
 
