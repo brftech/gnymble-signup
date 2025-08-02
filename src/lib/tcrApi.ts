@@ -1,5 +1,6 @@
 // The Campaign Registry (TCR) API Integration
 // Using Supabase Edge Function proxy to avoid CORS issues
+import { authConfig } from "../config/auth";
 
 const TCR_PROXY_URL =
   "https://rndpcearcqnvrnjxabgq.supabase.co/functions/v1/tcr-proxy";
@@ -62,6 +63,7 @@ function getProxyHeaders(): HeadersInit {
   return {
     "Content-Type": "application/json",
     Accept: "application/json",
+    "Authorization": `Bearer ${authConfig.supabase.anonKey}`,
   };
 }
 
@@ -70,13 +72,16 @@ export async function submitBrandVerification(
   brandData: TCRBrandRequest
 ): Promise<TCRBrandResponse> {
   try {
-    console.log("🚀 Submitting brand verification to TCR via proxy:", brandData);
+    console.log(
+      "🚀 Submitting brand verification to TCR via proxy:",
+      brandData
+    );
 
     const response = await fetch(TCR_PROXY_URL, {
       method: "POST",
       headers: getProxyHeaders(),
       body: JSON.stringify({
-        action: 'submitBrand',
+        action: "submitBrand",
         data: brandData,
       }),
     });
@@ -91,7 +96,7 @@ export async function submitBrandVerification(
     console.log("✅ TCR Brand Response:", result);
 
     if (!result.success) {
-      throw new Error(result.error || 'Unknown TCR error');
+      throw new Error(result.error || "Unknown TCR error");
     }
 
     return {
@@ -111,13 +116,16 @@ export async function submitCampaignApproval(
   campaignData: TCRCampaignRequest
 ): Promise<TCRCampaignResponse> {
   try {
-    console.log("🚀 Submitting campaign approval to TCR via proxy:", campaignData);
+    console.log(
+      "🚀 Submitting campaign approval to TCR via proxy:",
+      campaignData
+    );
 
     const response = await fetch(TCR_PROXY_URL, {
       method: "POST",
       headers: getProxyHeaders(),
       body: JSON.stringify({
-        action: 'submitCampaign',
+        action: "submitCampaign",
         data: campaignData,
       }),
     });
@@ -132,7 +140,7 @@ export async function submitCampaignApproval(
     console.log("✅ TCR Campaign Response:", result);
 
     if (!result.success) {
-      throw new Error(result.error || 'Unknown TCR error');
+      throw new Error(result.error || "Unknown TCR error");
     }
 
     return {
@@ -158,7 +166,7 @@ export async function checkBrandStatus(
       method: "POST",
       headers: getProxyHeaders(),
       body: JSON.stringify({
-        action: 'checkBrandStatus',
+        action: "checkBrandStatus",
         data: { brandId },
       }),
     });
@@ -173,7 +181,7 @@ export async function checkBrandStatus(
     console.log("✅ TCR Brand Status Response:", result);
 
     if (!result.success) {
-      throw new Error(result.error || 'Unknown TCR error');
+      throw new Error(result.error || "Unknown TCR error");
     }
 
     return {
@@ -199,7 +207,7 @@ export async function checkCampaignStatus(
       method: "POST",
       headers: getProxyHeaders(),
       body: JSON.stringify({
-        action: 'checkCampaignStatus',
+        action: "checkCampaignStatus",
         data: { campaignId },
       }),
     });
@@ -214,7 +222,7 @@ export async function checkCampaignStatus(
     console.log("✅ TCR Campaign Status Response:", result);
 
     if (!result.success) {
-      throw new Error(result.error || 'Unknown TCR error');
+      throw new Error(result.error || "Unknown TCR error");
     }
 
     return {
@@ -236,25 +244,27 @@ export function transformOnboardingDataToTCR(onboardingData: any): {
 } {
   const brandRequest: TCRBrandRequest = {
     brandName: onboardingData.legal_company_name,
-    dbaName: onboardingData.dba_brand_name || '',
-    countryOfRegistration: onboardingData.country_of_registration || 'US',
+    dbaName: onboardingData.dba_brand_name || "",
+    countryOfRegistration: onboardingData.country_of_registration || "US",
     taxNumber: onboardingData.tax_number_ein,
-    taxIssuingCountry: onboardingData.tax_issuing_country || 'US',
+    taxIssuingCountry: onboardingData.tax_issuing_country || "US",
     address: {
       street: onboardingData.address_street,
       city: onboardingData.city,
       stateRegion: onboardingData.state_region,
       postalCode: onboardingData.postal_code,
-      country: onboardingData.country || 'United States',
+      country: onboardingData.country || "United States",
     },
-    website: onboardingData.website || '',
-    verticalType: onboardingData.vertical_type || 'RETAIL_AND_CONSUMER_PRODUCTS', // Use form value with fallback
-    legalForm: onboardingData.legal_form || 'PRIVATE_PROFIT', // Use form value with fallback
+    website: onboardingData.website || "",
+    verticalType:
+      onboardingData.vertical_type || "RETAIL_AND_CONSUMER_PRODUCTS", // Use form value with fallback
+    legalForm: onboardingData.legal_form || "PRIVATE_PROFIT", // Use form value with fallback
     businessPhone: onboardingData.business_phone,
     pointOfContact: {
       firstName: onboardingData.first_name,
       lastName: onboardingData.last_name,
-      email: onboardingData.support_email || onboardingData.point_of_contact_email, // Use support email as default
+      email:
+        onboardingData.support_email || onboardingData.point_of_contact_email, // Use support email as default
       phone: onboardingData.business_phone || onboardingData.mobile_phone,
     },
   };
@@ -264,9 +274,10 @@ export function transformOnboardingDataToTCR(onboardingData: any): {
     campaignName: `${onboardingData.legal_company_name} - Default Campaign`,
     description: "Default campaign created during onboarding",
     useCase: "General business communications",
-    verticalType: onboardingData.vertical_type || 'RETAIL_AND_CONSUMER_PRODUCTS', // Use form value with fallback
-    referenceId: onboardingData.reference_id || '',
-    dunsGiinLei: onboardingData.duns_giin_lei || '',
+    verticalType:
+      onboardingData.vertical_type || "RETAIL_AND_CONSUMER_PRODUCTS", // Use form value with fallback
+    referenceId: onboardingData.reference_id || "",
+    dunsGiinLei: onboardingData.duns_giin_lei || "",
   };
 
   return { brandRequest, campaignRequest };
