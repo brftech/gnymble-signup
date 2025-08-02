@@ -50,9 +50,7 @@ const SimpleNavigation = () => {
 
             <Button
               size="sm"
-              onClick={() => {
-                window.location.href = "https://gnymble.percytech.com/login";
-              }}
+              onClick={() => handleNavClick("/login")}
               className="bg-primary text-primary-foreground hover:bg-primary-glow transition-colors"
             >
               Log In
@@ -93,10 +91,7 @@ const SimpleNavigation = () => {
                 <Button
                   size="sm"
                   className="w-full bg-primary text-primary-foreground hover:bg-primary-glow transition-colors"
-                  onClick={() => {
-                    window.location.href =
-                      "https://gnymble.percytech.com/login";
-                  }}
+                  onClick={() => handleNavClick("/login")}
                 >
                   Log In
                 </Button>

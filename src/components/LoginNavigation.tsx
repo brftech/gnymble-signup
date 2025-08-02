@@ -50,9 +50,7 @@ const LoginNavigation = () => {
 
             <Button
               size="sm"
-              onClick={() => {
-                window.location.href = "https://gnymble.percytech.com/signup";
-              }}
+              onClick={() => handleNavClick("/signup")}
               className="bg-primary text-primary-foreground hover:bg-primary-glow transition-colors"
             >
               Sign Up
@@ -93,10 +91,7 @@ const LoginNavigation = () => {
                 <Button
                   size="sm"
                   className="w-full bg-primary text-primary-foreground hover:bg-primary-glow transition-colors"
-                  onClick={() => {
-                    window.location.href =
-                      "https://gnymble.percytech.com/signup";
-                  }}
+                  onClick={() => handleNavClick("/signup")}
                 >
                   Sign Up
                 </Button>

@@ -40,7 +40,7 @@ export default function Login() {
       if (data.user) {
         toast.success("Login successful! Redirecting to dashboard...");
         setTimeout(() => {
-          window.location.href = "https://gnymble.percytech.com/dashboard";
+          window.location.href = "/dashboard";
         }, 1500);
       }
     } catch (error: unknown) {

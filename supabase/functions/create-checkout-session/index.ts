@@ -20,6 +20,11 @@ serve(async (req) => {
       apiVersion: "2023-10-16",
     });
 
+    // Get the origin from the request headers to support both localhost and production
+    const origin =
+      req.headers.get("origin") ||
+      "https://gnymble-signup-btjiiiaajr-percy-tech.vercel.app";
+
     const session = await stripe.checkout.sessions.create({
       customer_email: email,
       metadata: {
@@ -36,8 +41,8 @@ serve(async (req) => {
         },
       ],
       mode: "subscription",
-      success_url: `https://gnymble-signup-bw2kjkzzl-percy-tech.vercel.app/dashboard?payment=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `https://gnymble-signup-bw2kjkzzl-percy-tech.vercel.app/dashboard?payment=cancelled`,
+      success_url: `https://gnymble.percytech.com/dashboard?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/dashboard?payment=cancelled`,
       allow_promotion_codes: true,
     });
 

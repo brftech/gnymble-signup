@@ -131,7 +131,10 @@ export default function Payment() {
   };
 
   const handleBackToDashboard = () => {
-    window.location.href = "https://gnymble.percytech.com/dashboard";
+    console.log("🔙 Back to Dashboard button clicked");
+    console.log("📍 Current user:", user?.email);
+    console.log("📍 Current profile:", profile);
+    window.location.href = "/dashboard";
   };
 
   if (loading) {
@@ -205,16 +208,6 @@ export default function Payment() {
         </div>
 
         <div className="space-y-4">
-          <button
-            onClick={() => {
-              alert("🧪 TEST BUTTON CLICKED - Page is working!");
-              console.log("🧪 TEST BUTTON CLICKED - Page is working!");
-            }}
-            className="w-full py-2 bg-blue-600 hover:bg-blue-700 rounded-md font-semibold text-white"
-          >
-            🧪 Test Button - Click This First
-          </button>
-
           <button
             onClick={() => {
               alert("🔘 PAYMENT BUTTON CLICKED - Check console for details");

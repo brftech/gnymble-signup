@@ -144,9 +144,24 @@ export default function SignupPage() {
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
+
+    // Determine the correct redirect URL based on current environment
+    const isLocalhost =
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1";
+    const redirectUrl = isLocalhost
+      ? "http://localhost:5173/auth/callback"
+      : "https://gnymble-signup-btjiiaajr-percy-tech.vercel.app/auth/callback";
+
+    console.log("Google OAuth redirect URL:", redirectUrl);
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
+      options: {
+        redirectTo: redirectUrl,
+      },
     });
+
     if (error) {
       toast.error(error.message);
       setError(error.message);
@@ -280,7 +295,7 @@ export default function SignupPage() {
           setError("Account already exists");
           // Redirect to dashboard after a short delay
           setTimeout(() => {
-            window.location.href = "https://gnymble.percytech.com/dashboard";
+            window.location.href = "/dashboard";
           }, 2000);
         } else {
           toast.error(signUpError.message);

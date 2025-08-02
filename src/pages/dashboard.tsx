@@ -58,8 +58,48 @@ export default function Dashboard() {
   ];
 
   useEffect(() => {
-    checkUser();
-    checkPaymentStatus();
+    const initializeDashboard = async () => {
+      try {
+        // Get session first
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (!session?.user) {
+          console.log("❌ No session found, redirecting to login");
+          window.location.href = "/login";
+          return;
+        }
+
+        console.log("✅ User found:", session.user.email);
+        setUser(session.user);
+
+        // Load profile with shorter timeout
+        await loadUserProfile(session.user.id);
+
+        // Check payment status
+        checkPaymentStatus();
+
+        setLoading(false);
+      } catch (error) {
+        console.error("💥 Error initializing dashboard:", error);
+        toast.error("Error loading dashboard");
+        setLoading(false);
+      }
+    };
+
+    initializeDashboard();
+
+    // Listen for auth state changes (simplified)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT") {
+        window.location.href = "/login";
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const checkPaymentStatus = () => {
@@ -70,6 +110,11 @@ export default function Dashboard() {
       toast.success("Payment completed successfully! Welcome to Gnymble!");
       // Clear the URL parameter
       window.history.replaceState({}, document.title, window.location.pathname);
+
+      // Refresh the profile immediately
+      if (user) {
+        loadUserProfile(user.id);
+      }
     } else if (paymentStatus === "cancelled") {
       toast.error("Payment was cancelled. You can try again anytime.");
       // Clear the URL parameter
@@ -77,28 +122,9 @@ export default function Dashboard() {
     }
   };
 
-  const checkUser = async () => {
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (user) {
-        setUser(user);
-        await loadUserProfile(user.id);
-      } else {
-        // Redirect to login if no user
-        window.location.href = "/login";
-      }
-    } catch (error) {
-      console.error("Error checking user:", error);
-      toast.error("Error loading user data");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const loadUserProfile = async (userId: string) => {
+    console.log("👤 Loading profile for user:", userId);
+
     try {
       const { data, error } = await supabase
         .from("profiles")
@@ -106,10 +132,25 @@ export default function Dashboard() {
         .eq("id", userId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("❌ Profile load error:", error);
+        throw error;
+      }
+
+      console.log("✅ Profile loaded successfully:", data);
       setProfile(data);
     } catch (error) {
-      console.error("Error loading profile:", error);
+      console.error("💥 Error loading profile:", error);
+      // Set a default profile to prevent hanging
+      setProfile({
+        id: userId,
+        email: "unknown@example.com",
+        full_name: "Unknown User",
+        phone: "",
+        payment_status: "unknown",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
     }
   };
 
@@ -134,10 +175,10 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white pt-16">
+    <div className="min-h-screen bg-black text-white">
       {/* Header */}
-      <header className="border-b border-gray-800 p-6">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
+      <header className="border-b border-gray-800 px-4 sm:px-6 lg:px-8 py-6">
+        <div className="max-w-6xl mx-auto flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold">
               <span className="text-[#d67635]">G</span>nymble Dashboard
@@ -155,7 +196,7 @@ export default function Dashboard() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Payment Status Banner */}
         {profile?.payment_status === "pending" && (
           <div className="bg-gradient-to-r from-red-900/20 to-orange-900/20 border border-red-800 rounded-lg p-6 mb-8">
