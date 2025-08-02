@@ -4,6 +4,7 @@ import Login from "./pages/login";
 import Dashboard from "./pages/dashboard";
 import Payment from "./pages/payment";
 import ResetPassword from "./pages/reset-password";
+import AuthCallback from "./pages/auth-callback";
 import SimpleNavigation from "./components/SimpleNavigation";
 import LoginNavigation from "./components/LoginNavigation";
 
@@ -24,6 +25,7 @@ function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/payment" element={<Payment />} />
       </Routes>

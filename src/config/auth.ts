@@ -40,16 +40,19 @@ export const authConfig = {
 // Helper function to get current environment URLs
 export const getCurrentUrls = () => {
   // Check if we're in a browser environment
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     // If we're on localhost, use development URLs
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      console.log('Using development URLs (localhost detected)');
+    if (
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1"
+    ) {
+      console.log("Using development URLs (localhost detected)");
       return authConfig.urls.development;
     }
   }
-  
+
   // Otherwise use production URLs
-  console.log('Using production URLs');
+  console.log("Using production URLs");
   return authConfig.urls.production;
 };
 

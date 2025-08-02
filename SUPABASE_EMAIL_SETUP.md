@@ -1,56 +1,49 @@
-# Supabase Email Template Configuration
+# Supabase Configuration Guide
 
-## Issue: Emails still show "Supabase Auth" instead of "Gnymble Auth"
+## Issues to Fix:
+1. **Email branding**: Still shows "Supabase Auth" instead of "Gnymble Auth"
+2. **Reset password links**: Redirecting to localhost instead of production
+3. **Google OAuth redirects**: Also redirecting to localhost instead of production
 
-The email templates are configured in the Supabase dashboard, not in the client code. Here's how to fix it:
+## All configurations must be done in Supabase Dashboard
 
-## Steps to Configure Email Templates:
+### 1. Fix OAuth Redirect URLs (Google Sign-in)
 
-### 1. Access Supabase Dashboard
-- Go to [supabase.com](https://supabase.com)
-- Sign in to your account
-- Select the Gnymble project
+**Go to Supabase Dashboard:**
+- Visit [supabase.com](https://supabase.com)
+- Sign in and select your Gnymble project
 
-### 2. Navigate to Authentication Settings
-- Go to **Authentication** → **Settings**
-- Scroll down to **Email Templates**
+**Configure OAuth Redirect URLs:**
+- Go to **Authentication** → **Settings** → **URL Configuration**
+- Update **Site URL** to: `https://gnymble-signup-pwykig7sx-percy-tech.vercel.app`
+- Update **Redirect URLs** to include:
+  ```
+  https://gnymble-signup-pwykig7sx-percy-tech.vercel.app/auth/callback
+  https://gnymble-signup-pwykig7sx-percy-tech.vercel.app/login
+  https://gnymble-signup-pwykig7sx-percy-tech.vercel.app/signup
+  https://gnymble-signup-pwykig7sx-percy-tech.vercel.app/dashboard
+  ```
 
-### 3. Configure Email Templates
+**For Development (Optional):**
+- Add localhost URLs for development:
+  ```
+  http://localhost:5173/auth/callback
+  http://localhost:5173/login
+  http://localhost:5173/signup
+  http://localhost:5173/dashboard
+  ```
 
-#### **Confirm Signup Template:**
-- **Subject**: `[Gnymble] Confirm your email address`
+### 2. Configure Email Templates
+
+**Navigate to Email Templates:**
+- Go to **Authentication** → **Settings** → **Email Templates**
+
+**Update Reset Password Template:**
 - **From Name**: `Gnymble Auth`
-- **From Email**: `auth@gnymble.com` (or your custom domain)
-- **Template Content**: Customize the email body to include Gnymble branding
-
-#### **Reset Password Template:**
 - **Subject**: `[Gnymble] Reset your password`
-- **From Name**: `Gnymble Auth`
 - **From Email**: `auth@gnymble.com` (or your custom domain)
-- **Template Content**: Customize the email body to include Gnymble branding
 
-#### **Magic Link Template:**
-- **Subject**: `[Gnymble] Your magic link`
-- **From Name**: `Gnymble Auth`
-- **From Email**: `auth@gnymble.com` (or your custom domain)
-- **Template Content**: Customize the email body to include Gnymble branding
-
-### 4. Custom Domain Setup (Optional)
-For better branding, set up a custom domain:
-- Go to **Authentication** → **Settings** → **SMTP Settings**
-- Configure custom SMTP server or use Supabase's email service with custom domain
-
-### 5. Template Variables Available
-You can use these variables in your email templates:
-- `{{ .ConfirmationURL }}` - Confirmation link
-- `{{ .Token }}` - Token for manual verification
-- `{{ .TokenHash }}` - Hashed token
-- `{{ .SiteURL }}` - Your site URL
-- `{{ .Email }}` - User's email address
-
-### 6. Example Template Content
-
-**Reset Password Email:**
+**Template Content:**
 ```
 Subject: [Gnymble] Reset your password
 
@@ -67,17 +60,63 @@ Best regards,
 The Gnymble Team
 ```
 
-## For PercyMD Project:
+**Update Confirm Signup Template:**
+- **From Name**: `Gnymble Auth`
+- **Subject**: `[Gnymble] Confirm your email address`
+- **From Email**: `auth@gnymble.com`
+
+**Update Magic Link Template:**
+- **From Name**: `Gnymble Auth`
+- **Subject**: `[Gnymble] Your magic link`
+- **From Email**: `auth@gnymble.com`
+
+### 3. Configure Google OAuth Provider
+
+**Go to Authentication Providers:**
+- Go to **Authentication** → **Providers** → **Google**
+
+**Update Google OAuth Settings:**
+- **Client ID**: Your Google OAuth client ID
+- **Client Secret**: Your Google OAuth client secret
+- **Redirect URL**: `https://gnymble-signup-pwykig7sx-percy-tech.vercel.app/auth/callback`
+
+### 4. Template Variables Available
+
+You can use these variables in your email templates:
+- `{{ .ConfirmationURL }}` - Confirmation link
+- `{{ .Token }}` - Token for manual verification
+- `{{ .TokenHash }}` - Hashed token
+- `{{ .SiteURL }}` - Your site URL
+- `{{ .Email }}` - User's email address
+
+### 5. For PercyMD Project
+
 Follow the same steps but replace:
 - "Gnymble" with "PercyMD"
 - "gnymble.com" with "percymd.com"
+- Update all URLs to PercyMD's Vercel deployment URL
 - Update all branding references
 
-## Testing:
-1. Deploy the updated code
-2. Test the forgot password functionality
-3. Check that emails now show "Gnymble Auth" instead of "Supabase Auth"
-4. Verify that reset links work correctly
+### 6. Testing Checklist
 
-## Note:
-The client-side configuration in `src/config/auth.ts` is for future use and documentation, but the actual email templates must be configured in the Supabase dashboard. 
+After making these changes:
+1. ✅ Test Google sign-in (should redirect to production, not localhost)
+2. ✅ Test forgot password (should redirect to production, not localhost)
+3. ✅ Check email branding (should show "Gnymble Auth" not "Supabase Auth")
+4. ✅ Verify all OAuth flows work correctly
+
+### 7. Important Notes
+
+- **Client-side code changes won't fix these issues** - they must be configured in Supabase dashboard
+- **URLs are case-sensitive** - make sure to use exact URLs
+- **Changes may take a few minutes to propagate**
+- **Test in incognito mode** to avoid cached redirects
+
+### 8. Current Production URLs
+
+For the current deployment:
+- **Site URL**: `https://gnymble-signup-pwykig7sx-percy-tech.vercel.app`
+- **Auth Callback**: `https://gnymble-signup-pwykig7sx-percy-tech.vercel.app/auth/callback`
+- **Login**: `https://gnymble-signup-pwykig7sx-percy-tech.vercel.app/login`
+- **Signup**: `https://gnymble-signup-pwykig7sx-percy-tech.vercel.app/signup`
+- **Dashboard**: `https://gnymble-signup-pwykig7sx-percy-tech.vercel.app/dashboard`

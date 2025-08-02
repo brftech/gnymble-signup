@@ -75,8 +75,8 @@ export default function Login() {
     setForgotPasswordLoading(true);
     try {
       const redirectUrl = getResetPasswordUrl();
-      console.log('Reset password redirect URL:', redirectUrl);
-      
+      console.log("Reset password redirect URL:", redirectUrl);
+
       const { error } = await supabase.auth.resetPasswordForEmail(
         forgotPasswordEmail,
         {
