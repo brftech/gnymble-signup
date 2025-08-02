@@ -41,7 +41,7 @@ export default function ResetPassword() {
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!passwordValidation.isValid) {
       toast.error("Please ensure your password meets all requirements");
       return;
@@ -70,7 +70,8 @@ export default function ResetPassword() {
         }, 2000);
       }
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
+      const errorMessage =
+        error instanceof Error ? error.message : "An unexpected error occurred";
       toast.error(errorMessage);
       setError(errorMessage);
     } finally {
@@ -81,7 +82,7 @@ export default function ResetPassword() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <LoginNavigation />
-      
+
       {/* Hero Section */}
       <section className="relative pt-32 pb-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto text-center">
@@ -114,7 +115,10 @@ export default function ResetPassword() {
                 </p>
               </div>
 
-              <form onSubmit={handleResetPassword} className="space-y-4 text-left">
+              <form
+                onSubmit={handleResetPassword}
+                className="space-y-4 text-left"
+              >
                 {/* Password field */}
                 <div className="relative">
                   <input
@@ -158,7 +162,9 @@ export default function ResetPassword() {
                             : "text-red-400"
                         }`}
                       >
-                        <span>{passwordValidation.hasUpperCase ? "✓" : "✗"}</span>
+                        <span>
+                          {passwordValidation.hasUpperCase ? "✓" : "✗"}
+                        </span>
                         <span>One uppercase letter</span>
                       </div>
                       <div
@@ -168,7 +174,9 @@ export default function ResetPassword() {
                             : "text-red-400"
                         }`}
                       >
-                        <span>{passwordValidation.hasLowerCase ? "✓" : "✗"}</span>
+                        <span>
+                          {passwordValidation.hasLowerCase ? "✓" : "✗"}
+                        </span>
                         <span>One lowercase letter</span>
                       </div>
                       <div
@@ -188,7 +196,9 @@ export default function ResetPassword() {
                             : "text-red-400"
                         }`}
                       >
-                        <span>{passwordValidation.hasSpecialChar ? "✓" : "✗"}</span>
+                        <span>
+                          {passwordValidation.hasSpecialChar ? "✓" : "✗"}
+                        </span>
                         <span>One special character</span>
                       </div>
                     </div>
@@ -229,7 +239,9 @@ export default function ResetPassword() {
                   >
                     <span>{passwordsMatch ? "✓" : "✗"}</span>
                     <span>
-                      {passwordsMatch ? "Passwords match" : "Passwords do not match"}
+                      {passwordsMatch
+                        ? "Passwords match"
+                        : "Passwords do not match"}
                     </span>
                   </div>
                 )}
@@ -248,12 +260,17 @@ export default function ResetPassword() {
                   {loading ? "Updating..." : "Update Password"}
                 </button>
 
-                {error && <p className="text-destructive text-sm mt-2">{error}</p>}
+                {error && (
+                  <p className="text-destructive text-sm mt-2">{error}</p>
+                )}
               </form>
 
               <p className="text-sm text-muted-foreground text-center mt-6">
                 Remember your password?{" "}
-                <a href="/login" className="underline text-primary hover:text-primary-glow">
+                <a
+                  href="/login"
+                  className="underline text-primary hover:text-primary-glow"
+                >
                   Sign in
                 </a>
               </p>
@@ -263,4 +280,4 @@ export default function ResetPassword() {
       </section>
     </div>
   );
-} 
+}

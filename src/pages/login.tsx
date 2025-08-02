@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "../lib/supabaseClient";
+import { getResetPasswordUrl } from "../config/auth";
 
 export default function Login() {
   const [form, setForm] = useState({
@@ -43,7 +44,8 @@ export default function Login() {
         }, 1500);
       }
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
+      const errorMessage =
+        error instanceof Error ? error.message : "An unexpected error occurred";
       toast.error(errorMessage);
       setError(errorMessage);
     } finally {
@@ -72,9 +74,12 @@ export default function Login() {
 
     setForgotPasswordLoading(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(forgotPasswordEmail, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
+      const { error } = await supabase.auth.resetPasswordForEmail(
+        forgotPasswordEmail,
+        {
+          redirectTo: getResetPasswordUrl(),
+        }
+      );
 
       if (error) {
         toast.error(error.message);
@@ -83,7 +88,8 @@ export default function Login() {
         toast.success("Password reset email sent! Check your inbox.");
       }
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
+      const errorMessage =
+        error instanceof Error ? error.message : "An unexpected error occurred";
       toast.error(errorMessage);
     } finally {
       setForgotPasswordLoading(false);
@@ -115,7 +121,8 @@ export default function Login() {
 
           {/* Sub-headline */}
           <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-12">
-            Sign in to your account to continue building authentic relationships while navigating industry regulations.
+            Sign in to your account to continue building authentic relationships
+            while navigating industry regulations.
           </p>
 
           {/* Login Form */}
@@ -182,7 +189,9 @@ export default function Login() {
                   {loading ? "Signing in..." : "Sign In"}
                 </button>
 
-                {error && <p className="text-destructive text-sm mt-2">{error}</p>}
+                {error && (
+                  <p className="text-destructive text-sm mt-2">{error}</p>
+                )}
               </form>
 
               {/* Forgot Password Modal */}
@@ -191,23 +200,29 @@ export default function Login() {
                   <div className="bg-card border border-border rounded-lg p-6 w-full max-w-md">
                     <div className="text-center mb-6">
                       <h3 className="text-lg font-semibold mb-2">
-                        {forgotPasswordSent ? "Check Your Email" : "Reset Your Password"}
+                        {forgotPasswordSent
+                          ? "Check Your Email"
+                          : "Reset Your Password"}
                       </h3>
                       <p className="text-sm text-muted-foreground">
-                        {forgotPasswordSent 
+                        {forgotPasswordSent
                           ? "We've sent a password reset link to your email address."
-                          : "Enter your email address and we'll send you a link to reset your password."
-                        }
+                          : "Enter your email address and we'll send you a link to reset your password."}
                       </p>
                     </div>
 
                     {!forgotPasswordSent ? (
-                      <form onSubmit={handleForgotPassword} className="space-y-4">
+                      <form
+                        onSubmit={handleForgotPassword}
+                        className="space-y-4"
+                      >
                         <input
                           type="email"
                           placeholder="Email Address"
                           value={forgotPasswordEmail}
-                          onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                          onChange={(e) =>
+                            setForgotPasswordEmail(e.target.value)
+                          }
                           required
                           className="w-full p-3 rounded-md bg-input border border-border focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
                         />
@@ -224,7 +239,9 @@ export default function Login() {
                             disabled={forgotPasswordLoading}
                             className="flex-1 py-3 bg-primary hover:bg-primary-glow rounded-md font-semibold text-primary-foreground disabled:opacity-50 transition-colors"
                           >
-                            {forgotPasswordLoading ? "Sending..." : "Send Reset Link"}
+                            {forgotPasswordLoading
+                              ? "Sending..."
+                              : "Send Reset Link"}
                           </button>
                         </div>
                       </form>
@@ -232,12 +249,23 @@ export default function Login() {
                       <div className="space-y-4">
                         <div className="text-center">
                           <div className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <svg className="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            <svg
+                              className="w-6 h-6 text-green-500"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M5 13l4 4L19 7"
+                              />
                             </svg>
                           </div>
                           <p className="text-sm text-muted-foreground mb-4">
-                            Didn't receive the email? Check your spam folder or try again.
+                            Didn't receive the email? Check your spam folder or
+                            try again.
                           </p>
                         </div>
                         <div className="flex gap-3">
@@ -257,7 +285,10 @@ export default function Login() {
 
               <p className="text-sm text-muted-foreground text-center mt-6">
                 Don't have an account?{" "}
-                <a href="/signup" className="underline text-primary hover:text-primary-glow">
+                <a
+                  href="/signup"
+                  className="underline text-primary hover:text-primary-glow"
+                >
                   Sign up
                 </a>
               </p>

@@ -14,7 +14,11 @@ function App() {
 
   return (
     <>
-      {isLoginPage || isResetPasswordPage ? <LoginNavigation /> : <SimpleNavigation />}
+      {isLoginPage || isResetPasswordPage ? (
+        <LoginNavigation />
+      ) : (
+        <SimpleNavigation />
+      )}
       <Routes>
         <Route path="/" element={<Navigate to="/signup" replace />} />
         <Route path="/signup" element={<Signup />} />

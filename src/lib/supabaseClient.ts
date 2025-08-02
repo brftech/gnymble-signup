@@ -1,7 +1,15 @@
 // src/lib/supabaseClient.ts
 import { createClient } from "@supabase/supabase-js";
+import { authConfig } from "../config/auth";
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL!;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY!;
+const supabaseUrl = authConfig.supabase.url!;
+const supabaseAnonKey = authConfig.supabase.anonKey!;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    // Customize email templates and branding
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
+  },
+});
