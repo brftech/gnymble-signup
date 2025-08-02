@@ -1,10 +1,22 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "../lib/supabaseClient";
+import type { User } from "@supabase/supabase-js";
+
+interface UserProfile {
+  id: string;
+  email: string;
+  full_name: string;
+  phone: string;
+  company_name?: string;
+  payment_status?: string;
+  created_at: string;
+  updated_at: string;
+}
 
 export default function Payment() {
-  const [user, setUser] = useState<any>(null);
-  const [profile, setProfile] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [redirecting, setRedirecting] = useState(false);
 
@@ -71,7 +83,7 @@ export default function Payment() {
     }
   };
 
-  const redirectToStripeCheckout = async (user: any, profile: any) => {
+  const redirectToStripeCheckout = async (user: User, profile: UserProfile) => {
     console.log("🚀 PAYMENT BUTTON CLICKED - Starting redirect process");
     setRedirecting(true);
 
