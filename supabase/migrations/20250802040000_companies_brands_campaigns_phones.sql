@@ -214,6 +214,11 @@ CREATE POLICY "Users can update their own onboarding submissions" ON public.onbo
   FOR UPDATE USING (user_id = auth.uid());
 
 -- 9. Create functions for common operations
+-- Drop existing functions if they exist
+DROP FUNCTION IF EXISTS public.get_user_companies(UUID);
+DROP FUNCTION IF EXISTS public.get_company_brands(UUID);
+DROP FUNCTION IF EXISTS public.get_brand_campaigns(UUID);
+
 CREATE OR REPLACE FUNCTION public.get_user_companies(user_uuid UUID)
 RETURNS TABLE (
   company_id UUID,
