@@ -39,10 +39,18 @@ export const authConfig = {
 
 // Helper function to get current environment URLs
 export const getCurrentUrls = () => {
-  const isDevelopment = import.meta.env.DEV;
-  return isDevelopment
-    ? authConfig.urls.development
-    : authConfig.urls.production;
+  // Check if we're in a browser environment
+  if (typeof window !== 'undefined') {
+    // If we're on localhost, use development URLs
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      console.log('Using development URLs (localhost detected)');
+      return authConfig.urls.development;
+    }
+  }
+  
+  // Otherwise use production URLs
+  console.log('Using production URLs');
+  return authConfig.urls.production;
 };
 
 // Helper function to get reset password URL
