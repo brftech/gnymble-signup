@@ -4,6 +4,11 @@ import { supabase } from "../lib/supabaseClient";
 import { toast } from "sonner";
 import { Button } from "../components/ui/button";
 import type { OnboardingData, UserProfile } from "../types/database";
+import { 
+  submitBrandVerification, 
+  submitCampaignApproval, 
+  transformOnboardingDataToTCR 
+} from "../lib/tcrApi";
 
 export default function Onboarding() {
   const [currentStep, setCurrentStep] = useState<
@@ -151,14 +156,21 @@ export default function Onboarding() {
         throw companyError;
       }
 
-      // Create onboarding submission record
+      // Submit to The Campaign Registry (TCR)
+      const { brandRequest } = transformOnboardingDataToTCR(formData);
+      const tcrResponse = await submitBrandVerification(brandRequest);
+
+      console.log("TCR Brand Response:", tcrResponse);
+
+      // Create onboarding submission record with TCR data
       const { error: submissionError } = await supabase
         .from("onboarding_submissions")
         .insert({
           user_id: user.id,
           company_id: profile.company_id,
           submission_data: formData,
-          status: "submitted",
+          status: tcrResponse.status === 'APPROVED' ? 'approved' : 'submitted',
+          tcr_brand_id: tcrResponse.brandId,
         });
 
       if (submissionError) {
@@ -166,8 +178,24 @@ export default function Onboarding() {
         throw submissionError;
       }
 
+      // Update company with TCR brand ID
+      const { error: tcrUpdateError } = await supabase
+        .from("companies")
+        .update({
+          tcr_brand_id: tcrResponse.brandId,
+          brand_verification_status: tcrResponse.status === 'APPROVED' ? 'approved' : 'submitted',
+          brand_verification_date: tcrResponse.status === 'APPROVED' ? new Date().toISOString() : null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", profile.company_id);
+
+      if (tcrUpdateError) {
+        console.error("TCR update error:", tcrUpdateError);
+        throw tcrUpdateError;
+      }
+
       console.log("Brand verification submitted successfully:", formData);
-      toast.success("Brand verification submitted successfully!");
+      toast.success(`Brand verification ${tcrResponse.status === 'APPROVED' ? 'approved' : 'submitted'} to TCR!`);
       setCurrentStep("campaign");
     } catch (error) {
       console.error("Brand verification error:", error);
@@ -198,6 +226,27 @@ export default function Onboarding() {
         throw new Error("No company found for user");
       }
 
+      // Get the latest onboarding submission to get TCR brand ID
+      const { data: submission } = await supabase
+        .from("onboarding_submissions")
+        .select("tcr_brand_id")
+        .eq("user_id", user.id)
+        .eq("company_id", profile.company_id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (!submission?.tcr_brand_id) {
+        throw new Error("No TCR brand ID found. Please complete brand verification first.");
+      }
+
+      // Submit campaign to TCR
+      const { campaignRequest } = transformOnboardingDataToTCR(formData);
+      campaignRequest.brandId = submission.tcr_brand_id;
+      
+      const tcrCampaignResponse = await submitCampaignApproval(campaignRequest);
+      console.log("TCR Campaign Response:", tcrCampaignResponse);
+
       // Create a brand record for the company
       const { data: brand, error: brandError } = await supabase
         .from("brands")
@@ -208,6 +257,7 @@ export default function Onboarding() {
           vertical_type: formData.vertical_type,
           brand_verification_status: "approved",
           brand_verification_date: new Date().toISOString(),
+          tcr_brand_id: submission.tcr_brand_id,
         })
         .select()
         .single();
@@ -225,8 +275,9 @@ export default function Onboarding() {
           campaign_name: `${formData.legal_company_name} - Default Campaign`,
           description: "Default campaign created during onboarding",
           use_case: "General business communications",
-          campaign_approval_status: "approved",
-          campaign_approval_date: new Date().toISOString(),
+          campaign_approval_status: tcrCampaignResponse.status === 'APPROVED' ? 'approved' : 'submitted',
+          campaign_approval_date: tcrCampaignResponse.status === 'APPROVED' ? new Date().toISOString() : null,
+          tcr_campaign_id: tcrCampaignResponse.campaignId,
         })
         .select()
         .single();
@@ -255,7 +306,8 @@ export default function Onboarding() {
       const { error: submissionUpdateError } = await supabase
         .from("onboarding_submissions")
         .update({
-          status: "approved",
+          status: tcrCampaignResponse.status === 'APPROVED' ? 'approved' : 'submitted',
+          tcr_campaign_id: tcrCampaignResponse.campaignId,
           processed_at: new Date().toISOString(),
         })
         .eq("user_id", user.id)
@@ -268,8 +320,8 @@ export default function Onboarding() {
         throw submissionUpdateError;
       }
 
-      console.log("Onboarding completed successfully:", { brand, campaign });
-      toast.success("Onboarding completed successfully!");
+      console.log("Onboarding completed successfully:", { brand, campaign, tcrResponse: tcrCampaignResponse });
+      toast.success(`Onboarding completed! Campaign ${tcrCampaignResponse.status === 'APPROVED' ? 'approved' : 'submitted'} to TCR.`);
       setCurrentStep("complete");
     } catch (error) {
       console.error("Onboarding completion error:", error);
