@@ -286,8 +286,8 @@ export function transformOnboardingDataToTCR(onboardingData: {
       firstName: onboardingData.first_name,
       lastName: onboardingData.last_name,
       email:
-        onboardingData.support_email || onboardingData.point_of_contact_email, // Use support email as default
-      phone: onboardingData.business_phone || onboardingData.mobile_phone,
+        onboardingData.support_email || onboardingData.point_of_contact_email || "", // Use support email as default
+      phone: onboardingData.business_phone || onboardingData.mobile_phone || "",
     },
   };
 
