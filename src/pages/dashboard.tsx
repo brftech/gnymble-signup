@@ -234,7 +234,6 @@ export default function Dashboard() {
             </p>
           </div>
           <div className="flex items-center space-x-3">
-            <AdminLink userId={user?.id} />
             <button
               onClick={handleLogout}
               className="px-4 py-2 text-gray-400 hover:text-white border border-gray-700 rounded-md hover:border-gray-600"
@@ -471,43 +470,5 @@ export default function Dashboard() {
         </div>
       </div>
     </div>
-  );
-}
-
-// Component to show admin link for superadmins
-function AdminLink({ userId }: { userId?: string }) {
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  useEffect(() => {
-    if (!userId) return;
-    
-    const checkAdminStatus = async () => {
-      const { data } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", userId)
-        .eq("role", "superadmin")
-        .single();
-      
-      if (data) {
-        setIsAdmin(true);
-      }
-    };
-    
-    checkAdminStatus();
-  }, [userId]);
-
-  if (!isAdmin) return null;
-
-  return (
-    <a
-      href="/admin"
-      className="px-4 py-2 bg-[#d67635] hover:bg-[#c96528] text-white rounded-md font-medium flex items-center space-x-2"
-    >
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-      </svg>
-      <span>Admin Panel</span>
-    </a>
   );
 }

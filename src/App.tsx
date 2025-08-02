@@ -11,9 +11,6 @@ import Home from "./pages/home";
 import SimpleNavigation from "./components/SimpleNavigation";
 import LoginNavigation from "./components/LoginNavigation";
 import Footer from "./components/shared/Footer";
-import AdminRoute from "./components/AdminRoute";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminUsers from "./pages/admin/AdminUsers";
 
 function App() {
   const location = useLocation();
@@ -23,7 +20,6 @@ function App() {
   const isCompleteProfilePage = location.pathname === "/complete-profile";
   const isOnboardingPage = location.pathname === "/onboarding";
   const isHomePage = location.pathname === "/";
-  const isAdminPage = location.pathname.startsWith("/admin");
 
   return (
     <>
@@ -31,8 +27,7 @@ function App() {
         <LoginNavigation />
       ) : isDashboardPage ||
         isCompleteProfilePage ||
-        isOnboardingPage ||
-        isAdminPage ? null : (
+        isOnboardingPage ? null : (
         <SimpleNavigation />
       )}
       <Routes>
@@ -45,22 +40,10 @@ function App() {
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/payment" element={<Payment />} />
-        
-        {/* Admin Routes */}
-        <Route path="/admin" element={
-          <AdminRoute>
-            <AdminDashboard />
-          </AdminRoute>
-        } />
-        <Route path="/admin/users" element={
-          <AdminRoute>
-            <AdminUsers />
-          </AdminRoute>
-        } />
       </Routes>
       
-      {/* Add footer to all pages except home and admin (which have their own) */}
-      {!isHomePage && !isAdminPage && <Footer brand="gnymble" variant="minimal" />}
+      {/* Add footer to all pages except home (which has its own) */}
+      {!isHomePage && <Footer brand="gnymble" variant="minimal" />}
     </>
   );
 }
