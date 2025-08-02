@@ -1,8 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
 import { supabase } from "../lib/supabaseClient";
-import { testWebhookLogic } from "../lib/testWebhook";
-import { testDatabaseSimple } from "../lib/testDatabaseSimple";
 
 interface UserProfile {
   id: string;
@@ -12,6 +10,8 @@ interface UserProfile {
   payment_status: string;
   stripe_customer_id?: string;
   payment_date?: string;
+  brand_verification_status?: string;
+  tcr_brand_id?: string;
   created_at: string;
   updated_at: string;
 }
@@ -46,6 +46,13 @@ export default function Dashboard() {
 
       console.log("✅ Profile loaded successfully:", data);
       setProfile(data);
+
+      // If brand verification is pending, check status after a delay
+      if (data.brand_verification_status === "pending" && data.tcr_brand_id) {
+        setTimeout(() => {
+          checkBrandVerificationStatus(data.tcr_brand_id);
+        }, 2000); // Check after 2 seconds
+      }
     } catch (error) {
       console.error("💥 Error loading profile:", error);
       // Set a default profile to prevent hanging
@@ -60,6 +67,55 @@ export default function Dashboard() {
       });
     }
   }, []);
+
+  const checkBrandVerificationStatus = useCallback(
+    async (brandId: string) => {
+      try {
+        console.log("🔍 Checking brand verification status for:", brandId);
+
+                 const response = await fetch(
+           `https://rndpcearcqnvrnjxabgq.supabase.co/functions/v1/tcr-proxy`,
+           {
+             method: "POST",
+             headers: {
+               "Content-Type": "application/json",
+               Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJuZHBjZWFyY3FudnJuanhhYmdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM0NDQ2NDYsImV4cCI6MjA1OTAyMDY0Nn0.bYzWmLoviaS9ERAbDRh-ZH6B7dMtmUwWRwJpCNrdzFM`,
+             },
+             body: JSON.stringify({
+               action: "checkBrandStatus",
+               data: { brandId },
+             }),
+           }
+         );
+
+        if (response.ok) {
+          const result = await response.json();
+          console.log("✅ Brand status check result:", result);
+
+          if (result.success && result.status) {
+            // Update profile with new status
+            const { error: updateError } = await supabase
+              .from("profiles")
+              .update({
+                brand_verification_status: result.status.toLowerCase(),
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", user?.id);
+
+            if (!updateError) {
+              // Reload profile to show updated status
+              if (user) {
+                loadUserProfile(user.id);
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error("❌ Error checking brand status:", error);
+      }
+    },
+    [user, loadUserProfile]
+  );
 
   const checkPaymentStatus = useCallback(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -92,15 +148,22 @@ export default function Dashboard() {
     {
       id: "brand-verification",
       title: "Brand Verification",
-      description: "Submit company information for TCR compliance",
-      completed: false, // Will be updated based on onboarding status
+      description:
+        profile?.brand_verification_status === "verified"
+          ? "Brand verified and approved by TCR"
+          : profile?.brand_verification_status === "pending"
+          ? "Brand verification in progress with TCR"
+          : profile?.brand_verification_status === "rejected"
+          ? "Brand verification rejected - please review and resubmit"
+          : "Submit company information for TCR compliance",
+      completed: profile?.brand_verification_status === "verified",
       required: true,
     },
     {
       id: "campaign-approval",
       title: "Campaign Approval",
       description: "Get campaign approved for SMS messaging",
-      completed: false, // Will be updated based on onboarding status
+      completed: false, // Will be updated when campaign approval is implemented
       required: true,
     },
     {
@@ -168,45 +231,6 @@ export default function Dashboard() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     window.location.href = "/login";
-  };
-
-  const handleTestWebhook = async () => {
-    if (!user) {
-      toast.error("No user found");
-      return;
-    }
-
-    console.log("🧪 Testing webhook logic for user:", user.id);
-    const result = await testWebhookLogic(user.id);
-
-    if (result.success) {
-      toast.success("Webhook test successful! Check console for details.");
-      console.log("✅ Webhook test result:", result);
-    } else {
-      toast.error(
-        `Webhook test failed: ${
-          result.error ? String(result.error) : "Unknown error"
-        }`
-      );
-      console.error("❌ Webhook test error:", result.error);
-    }
-  };
-
-  const handleTestDatabaseSimple = async () => {
-    console.log("🧪 Testing simple database operations...");
-    const result = await testDatabaseSimple();
-
-    if (result.success) {
-      toast.success("Database test successful! RLS is disabled.");
-      console.log("✅ Database test result:", result);
-    } else {
-      toast.error(
-        `Database test failed: ${
-          result.error ? String(result.error) : "Unknown error"
-        }`
-      );
-      console.error("❌ Database test error:", result.error);
-    }
   };
 
   if (loading) {
@@ -405,17 +429,20 @@ export default function Dashboard() {
                       onClick={handleOnboarding}
                       className="bg-[#d67635] hover:bg-[#c96528] px-4 py-2 rounded-md text-sm font-medium"
                     >
-                      Start Onboarding
+                      {profile?.brand_verification_status === "pending"
+                        ? "Check Status"
+                        : "Start Brand Verification"}
                     </button>
                   )}
                 {step.id === "campaign-approval" &&
                   profile?.payment_status === "paid" &&
+                  profile?.brand_verification_status === "verified" &&
                   !step.completed && (
                     <button
                       onClick={handleOnboarding}
                       className="bg-[#d67635] hover:bg-[#c96528] px-4 py-2 rounded-md text-sm font-medium"
                     >
-                      Continue Onboarding
+                      Start Campaign Approval
                     </button>
                   )}
               </div>
@@ -439,30 +466,42 @@ export default function Dashboard() {
             ) : (
               <>
                 <p>1. ✅ Payment completed - Ready for onboarding</p>
-                <p>2. Complete brand verification (TCR compliance)</p>
-                <p>3. Get campaign approval for SMS messaging</p>
+                {profile?.brand_verification_status === "verified" ? (
+                  <p>2. ✅ Brand verification completed</p>
+                ) : profile?.brand_verification_status === "pending" ? (
+                  <p>2. 🔄 Brand verification in progress with TCR</p>
+                ) : profile?.brand_verification_status === "rejected" ? (
+                  <p>
+                    2. ❌ Brand verification rejected - please review and
+                    resubmit
+                  </p>
+                ) : (
+                  <p>2. Complete brand verification (TCR compliance)</p>
+                )}
+                {profile?.brand_verification_status === "verified" ? (
+                  <p>3. Get campaign approval for SMS messaging</p>
+                ) : (
+                  <p>3. ⏳ Campaign approval (requires brand verification)</p>
+                )}
                 <p>4. Access your Gnymble dashboard and start messaging</p>
                 <div className="mt-4 space-y-3">
-                  <button
-                    onClick={handleOnboarding}
-                    className="bg-[#d67635] hover:bg-[#c96528] px-6 py-3 rounded-md font-semibold text-white transition-colors"
-                  >
-                    Start Onboarding Process →
-                  </button>
-
-                  <button
-                    onClick={handleTestWebhook}
-                    className="bg-gray-700 hover:bg-gray-600 px-6 py-3 rounded-md font-medium text-white transition-colors"
-                  >
-                    Test Webhook Logic (Debug)
-                  </button>
-
-                  <button
-                    onClick={handleTestDatabaseSimple}
-                    className="bg-blue-700 hover:bg-blue-600 px-6 py-3 rounded-md font-medium text-white transition-colors"
-                  >
-                    Test Database (No RLS)
-                  </button>
+                  {profile?.brand_verification_status === "verified" ? (
+                    <button
+                      onClick={handleOnboarding}
+                      className="bg-[#d67635] hover:bg-[#c96528] px-6 py-3 rounded-md font-semibold text-white transition-colors"
+                    >
+                      Start Campaign Approval →
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleOnboarding}
+                      className="bg-[#d67635] hover:bg-[#c96528] px-6 py-3 rounded-md font-semibold text-white transition-colors"
+                    >
+                      {profile?.brand_verification_status === "pending"
+                        ? "Check Brand Status"
+                        : "Start Brand Verification"}
+                    </button>
+                  )}
                 </div>
               </>
             )}
@@ -472,3 +511,5 @@ export default function Dashboard() {
     </div>
   );
 }
+
+
