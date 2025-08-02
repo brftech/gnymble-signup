@@ -2,7 +2,7 @@
 // Using Supabase Edge Function proxy to avoid CORS issues
 
 const TCR_PROXY_URL =
-  "https://rndpcearcqnvrnjxabgg.supabase.co/functions/v1/tcr-proxy";
+  "https://rndpcearcqnvrnjxabgq.supabase.co/functions/v1/tcr-proxy";
 
 // TCR API Types
 export interface TCRBrandRequest {
