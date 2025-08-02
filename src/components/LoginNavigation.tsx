@@ -94,7 +94,8 @@ const LoginNavigation = () => {
                   size="sm"
                   className="w-full bg-primary text-primary-foreground hover:bg-primary-glow transition-colors"
                   onClick={() => {
-                    window.location.href = "https://gnymble.percytech.com/signup";
+                    window.location.href =
+                      "https://gnymble.percytech.com/signup";
                   }}
                 >
                   Sign Up
@@ -108,4 +109,4 @@ const LoginNavigation = () => {
   );
 };
 
-export default LoginNavigation; 
+export default LoginNavigation;

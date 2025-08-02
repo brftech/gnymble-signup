@@ -94,7 +94,8 @@ const SimpleNavigation = () => {
                   size="sm"
                   className="w-full bg-primary text-primary-foreground hover:bg-primary-glow transition-colors"
                   onClick={() => {
-                    window.location.href = "https://gnymble.percytech.com/login";
+                    window.location.href =
+                      "https://gnymble.percytech.com/login";
                   }}
                 >
                   Log In
