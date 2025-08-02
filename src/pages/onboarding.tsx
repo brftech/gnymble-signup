@@ -345,7 +345,7 @@ export default function Onboarding() {
     if (result.success) {
       toast.success("Database connection test passed!");
     } else {
-      toast.error(`Database test failed: ${result.error?.message || 'Unknown error'}`);
+      toast.error(`Database test failed: ${result.error ? String(result.error) : 'Unknown error'}`);
     }
   };
 
