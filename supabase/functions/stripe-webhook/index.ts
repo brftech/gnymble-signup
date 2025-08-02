@@ -130,7 +130,7 @@ serve(async (req) => {
           .select("name")
           .eq("id", userProfile.company_id)
           .single();
-        
+
         if (companyError) {
           console.error("❌ Error fetching company:", companyError);
         } else {
@@ -139,123 +139,190 @@ serve(async (req) => {
         }
       }
 
-      // 2. Create customer record
-      console.log("👥 Creating customer record with company name:", companyName);
-      const customerInsertData = {
-        email: userProfile.email,
-        company_name: companyName,
-        primary_platform: "gnymble",
-        customer_type: "classic",
-        status: "active",
-      };
-      
-      console.log("📋 Customer insert data:", customerInsertData);
-      
-      const { data: customerData, error: customerError } = await supabase
+      // 2. Check if customer already exists or create new one
+      console.log("🔍 Checking if customer already exists...");
+      const { data: existingCustomer } = await supabase
         .from("customers")
-        .insert(customerInsertData)
-        .select()
+        .select("*")
+        .eq("email", userProfile.email)
         .single();
 
-      if (customerError) {
-        console.error("❌ Error creating customer:", customerError);
-        console.error("❌ Customer error details:", JSON.stringify(customerError, null, 2));
-        return new Response(
-          JSON.stringify({
-            error: "Failed to create customer",
-            details: customerError,
-          }),
-          {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-            status: 500,
-          }
+      let customerData;
+      if (existingCustomer) {
+        console.log("✅ Customer already exists:", existingCustomer);
+        customerData = existingCustomer;
+      } else {
+        console.log(
+          "👥 Creating customer record with company name:",
+          companyName
         );
-      }
+        const customerInsertData = {
+          email: userProfile.email,
+          company_name: companyName,
+          primary_platform: "gnymble",
+          customer_type: "classic",
+          status: "active",
+        };
 
-      console.log("✅ Created customer:", customerData);
+        console.log("📋 Customer insert data:", customerInsertData);
 
-      // 3. Create subscription record (since this is a subscription payment)
-      console.log("📦 Creating subscription record...");
-      const subscriptionInsertData = {
-        customer_id: customerData.id,
-        platform: "gnymble",
-        stripe_subscription_id: session.subscription as string,
-        plan_name: "Gnymble Onboarding Package",
-        status: "active",
-        current_period_start: new Date().toISOString(),
-        current_period_end: new Date(
-          Date.now() + 30 * 24 * 60 * 60 * 1000
-        ).toISOString(), // 30 days
-      };
-      
-      console.log("📋 Subscription insert data:", subscriptionInsertData);
-      
-      const { data: subscriptionData, error: subscriptionError } =
-        await supabase
-          .from("subscriptions")
-          .insert(subscriptionInsertData)
+        const { data: newCustomer, error: customerError } = await supabase
+          .from("customers")
+          .insert(customerInsertData)
           .select()
           .single();
 
-      if (subscriptionError) {
-        console.error("❌ Error creating subscription:", subscriptionError);
-        console.error("❌ Subscription error details:", JSON.stringify(subscriptionError, null, 2));
-      } else {
-        console.log("✅ Created subscription:", subscriptionData);
+        if (customerError) {
+          console.error("❌ Error creating customer:", customerError);
+          console.error(
+            "❌ Customer error details:",
+            JSON.stringify(customerError, null, 2)
+          );
+          return new Response(
+            JSON.stringify({
+              error: "Failed to create customer",
+              details: customerError,
+            }),
+            {
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+              status: 500,
+            }
+          );
+        }
+
+        console.log("✅ Created customer:", newCustomer);
+        customerData = newCustomer;
       }
 
-      // 4. Create customer access record
-      console.log("🔐 Creating customer access record...");
-      const accessInsertData = {
-        customer_id: customerData.id,
-        platform: "gnymble",
-        access_level: "full",
-        platform_user_id: userId,
-        onboarding_completed: false,
-      };
-      
-      console.log("📋 Access insert data:", accessInsertData);
-      
-      const { error: accessError } = await supabase
+      // 3. Check if subscription already exists or create new one
+      console.log("🔍 Checking if subscription already exists...");
+      const { data: existingSubscription } = await supabase
+        .from("subscriptions")
+        .select("*")
+        .eq("customer_id", customerData.id)
+        .single();
+
+      let subscriptionData;
+      if (existingSubscription) {
+        console.log("✅ Subscription already exists:", existingSubscription);
+        subscriptionData = existingSubscription;
+      } else {
+        console.log("📦 Creating subscription record...");
+        const subscriptionInsertData = {
+          customer_id: customerData.id,
+          platform: "gnymble",
+          stripe_subscription_id: session.subscription as string,
+          plan_name: "Gnymble Onboarding Package",
+          status: "active",
+          current_period_start: new Date().toISOString(),
+          current_period_end: new Date(
+            Date.now() + 30 * 24 * 60 * 60 * 1000
+          ).toISOString(), // 30 days
+        };
+
+        console.log("📋 Subscription insert data:", subscriptionInsertData);
+
+        const { data: newSubscription, error: subscriptionError } =
+          await supabase
+            .from("subscriptions")
+            .insert(subscriptionInsertData)
+            .select()
+            .single();
+
+        if (subscriptionError) {
+          console.error("❌ Error creating subscription:", subscriptionError);
+          console.error(
+            "❌ Subscription error details:",
+            JSON.stringify(subscriptionError, null, 2)
+          );
+        } else {
+          console.log("✅ Created subscription:", newSubscription);
+          subscriptionData = newSubscription;
+        }
+      }
+
+      // 4. Check if customer access already exists or create new one
+      console.log("🔍 Checking if customer access already exists...");
+      const { data: existingAccess } = await supabase
         .from("customer_access")
-        .insert(accessInsertData);
+        .select("*")
+        .eq("customer_id", customerData.id)
+        .eq("platform_user_id", userId)
+        .single();
 
-      if (accessError) {
-        console.error("❌ Error creating customer access:", accessError);
-        console.error("❌ Access error details:", JSON.stringify(accessError, null, 2));
+      if (existingAccess) {
+        console.log("✅ Customer access already exists:", existingAccess);
       } else {
-        console.log("✅ Created customer access record");
+        console.log("🔐 Creating customer access record...");
+        const accessInsertData = {
+          customer_id: customerData.id,
+          platform: "gnymble",
+          access_level: "full",
+          platform_user_id: userId,
+          onboarding_completed: false,
+        };
+
+        console.log("📋 Access insert data:", accessInsertData);
+
+        const { error: accessError } = await supabase
+          .from("customer_access")
+          .insert(accessInsertData);
+
+        if (accessError) {
+          console.error("❌ Error creating customer access:", accessError);
+          console.error(
+            "❌ Access error details:",
+            JSON.stringify(accessError, null, 2)
+          );
+        } else {
+          console.log("✅ Created customer access record");
+        }
       }
 
-      // 5. Update user role to 'customer'
-      console.log("👤 Updating user role to customer...");
-      const { error: roleError } = await supabase.from("user_roles").upsert({
-        user_id: userId,
-        role: "customer",
-      });
+      // 5. Check if user role already exists or update it
+      console.log("🔍 Checking if user role already exists...");
+      const { data: existingRole } = await supabase
+        .from("user_roles")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("role", "customer")
+        .single();
 
-      if (roleError) {
-        console.error("❌ Error updating user role:", roleError);
-        console.error("❌ Role error details:", JSON.stringify(roleError, null, 2));
+      if (existingRole) {
+        console.log("✅ User role already exists:", existingRole);
       } else {
-        console.log("✅ Updated user role to customer");
+        console.log("👤 Updating user role to customer...");
+        const { error: roleError } = await supabase.from("user_roles").upsert({
+          user_id: userId,
+          role: "customer",
+        });
+
+        if (roleError) {
+          console.error("❌ Error updating user role:", roleError);
+          console.error(
+            "❌ Role error details:",
+            JSON.stringify(roleError, null, 2)
+          );
+        } else {
+          console.log("✅ Updated user role to customer");
+        }
       }
 
       // 6. Verify all records were created
       console.log("🔍 Verifying created records...");
-      
+
       const { data: verifyCustomer } = await supabase
         .from("customers")
         .select("*")
         .eq("email", userProfile.email)
         .single();
-      
+
       const { data: verifySubscription } = await supabase
         .from("subscriptions")
         .select("*")
         .eq("customer_id", customerData.id)
         .single();
-      
+
       const { data: verifyAccess } = await supabase
         .from("customer_access")
         .select("*")
@@ -263,9 +330,18 @@ serve(async (req) => {
         .single();
 
       console.log("✅ Verification results:");
-      console.log("  - Customer record:", verifyCustomer ? "✅ Found" : "❌ Missing");
-      console.log("  - Subscription record:", verifySubscription ? "✅ Found" : "❌ Missing");
-      console.log("  - Access record:", verifyAccess ? "✅ Found" : "❌ Missing");
+      console.log(
+        "  - Customer record:",
+        verifyCustomer ? "✅ Found" : "❌ Missing"
+      );
+      console.log(
+        "  - Subscription record:",
+        verifySubscription ? "✅ Found" : "❌ Missing"
+      );
+      console.log(
+        "  - Access record:",
+        verifyAccess ? "✅ Found" : "❌ Missing"
+      );
 
       console.log("🎉 Successfully processed payment for user:", userId);
       console.log("📈 User progression: Profile → Customer → Subscriber");
