@@ -154,23 +154,31 @@ export async function checkBrandStatus(
   try {
     console.log("🔍 Checking brand status for:", brandId);
 
-    const response = await fetch(`${TCR_BASE_URL}/brands/${brandId}`, {
-      method: "GET",
-      headers: getAuthHeaders(),
+    const response = await fetch(TCR_PROXY_URL, {
+      method: "POST",
+      headers: getProxyHeaders(),
+      body: JSON.stringify({
+        action: 'checkBrandStatus',
+        data: { brandId },
+      }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("❌ TCR Brand Status Error:", response.status, errorText);
-      throw new Error(`TCR API Error: ${response.status} - ${errorText}`);
+      console.error("❌ TCR Proxy Error:", response.status, errorText);
+      throw new Error(`TCR Proxy Error: ${response.status} - ${errorText}`);
     }
 
     const result = await response.json();
     console.log("✅ TCR Brand Status Response:", result);
 
+    if (!result.success) {
+      throw new Error(result.error || 'Unknown TCR error');
+    }
+
     return {
-      brandId: result.brandId || result.id,
-      status: result.status || "PENDING",
+      brandId: result.brandId,
+      status: result.status,
       message: result.message,
       errors: result.errors,
     };
@@ -187,27 +195,31 @@ export async function checkCampaignStatus(
   try {
     console.log("🔍 Checking campaign status for:", campaignId);
 
-    const response = await fetch(`${TCR_BASE_URL}/campaigns/${campaignId}`, {
-      method: "GET",
-      headers: getAuthHeaders(),
+    const response = await fetch(TCR_PROXY_URL, {
+      method: "POST",
+      headers: getProxyHeaders(),
+      body: JSON.stringify({
+        action: 'checkCampaignStatus',
+        data: { campaignId },
+      }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(
-        "❌ TCR Campaign Status Error:",
-        response.status,
-        errorText
-      );
-      throw new Error(`TCR API Error: ${response.status} - ${errorText}`);
+      console.error("❌ TCR Proxy Error:", response.status, errorText);
+      throw new Error(`TCR Proxy Error: ${response.status} - ${errorText}`);
     }
 
     const result = await response.json();
     console.log("✅ TCR Campaign Status Response:", result);
 
+    if (!result.success) {
+      throw new Error(result.error || 'Unknown TCR error');
+    }
+
     return {
-      campaignId: result.campaignId || result.id,
-      status: result.status || "PENDING",
+      campaignId: result.campaignId,
+      status: result.status,
       message: result.message,
       errors: result.errors,
     };
