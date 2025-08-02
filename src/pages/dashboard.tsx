@@ -182,7 +182,7 @@ export default function Dashboard() {
       toast.success("Webhook test successful! Check console for details.");
       console.log("✅ Webhook test result:", result);
     } else {
-      toast.error(`Webhook test failed: ${result.error?.message || 'Unknown error'}`);
+      toast.error(`Webhook test failed: ${result.error ? String(result.error) : 'Unknown error'}`);
       console.error("❌ Webhook test error:", result.error);
     }
   };
