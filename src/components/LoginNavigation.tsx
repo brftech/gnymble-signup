@@ -9,7 +9,7 @@ const LoginNavigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const navigation = [];
+  const navigation: { name: string; href: string }[] = [];
 
   const isActive = (href: string) => {
     return location.pathname === href;
