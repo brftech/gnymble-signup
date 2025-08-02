@@ -3,47 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import { toast } from "sonner";
 import { Button } from "../components/ui/button";
-
-interface OnboardingData {
-  // Brand Verification Fields
-  legal_company_name: string;
-  dba_brand_name: string;
-  country_of_registration: string;
-  tax_number_ein: string;
-  tax_issuing_country: string;
-  address_street: string;
-  city: string;
-  state_region: string;
-  postal_code: string;
-  country: string;
-  website: string;
-  vertical_type: string;
-  legal_form: string;
-  business_phone: string;
-  point_of_contact_email: string;
-
-  // Campaign Approval Fields
-  stock_symbol: string;
-  stock_exchange: string;
-  reference_id: string;
-  duns_giin_lei: string;
-
-  // Contact Information
-  first_name: string;
-  last_name: string;
-  mobile_phone: string;
-}
-
-interface UserProfile {
-  id: string;
-  email: string;
-  full_name: string;
-  phone: string;
-  company_name?: string;
-  payment_status: string;
-  created_at: string;
-  updated_at: string;
-}
+import type { OnboardingData, UserProfile } from "../types/database";
 
 export default function Onboarding() {
   const [currentStep, setCurrentStep] = useState<
@@ -101,18 +61,18 @@ export default function Onboarding() {
 
       setProfile(data);
 
-              // Pre-fill form with existing data
-        if (data) {
-          setFormData((prev) => ({
-            ...prev,
-            legal_company_name: data.company_name || "",
-            first_name: data.full_name?.split(" ")[0] || "",
-            last_name: data.full_name?.split(" ").slice(1).join(" ") || "",
-            mobile_phone: data.phone || "",
-            business_phone: data.phone || "", // Pre-fill with user's phone
-            point_of_contact_email: data.email || "", // Pre-fill with user's email
-          }));
-        }
+      // Pre-fill form with existing data
+      if (data) {
+        setFormData((prev) => ({
+          ...prev,
+          legal_company_name: data.company_name || "",
+          first_name: data.full_name?.split(" ")[0] || "",
+          last_name: data.full_name?.split(" ").slice(1).join(" ") || "",
+          mobile_phone: data.phone || "",
+          business_phone: data.phone || "", // Pre-fill with user's phone
+          point_of_contact_email: data.email || "", // Pre-fill with user's email
+        }));
+      }
     } catch (error) {
       console.error("Error loading profile:", error);
       toast.error("Error loading profile");
@@ -122,22 +82,22 @@ export default function Onboarding() {
   const handleBrandVerification = async () => {
     setLoading(true);
     try {
-              // Validate required brand fields
-        const requiredFields = [
-          "legal_company_name",
-          "country_of_registration",
-          "tax_number_ein",
-          "address_street",
-          "city",
-          "state_region",
-          "postal_code",
-          "country",
-          "website",
-          "legal_form",
-          "vertical_type",
-          "business_phone",
-          "point_of_contact_email",
-        ];
+      // Validate required brand fields
+      const requiredFields = [
+        "legal_company_name",
+        "country_of_registration",
+        "tax_number_ein",
+        "address_street",
+        "city",
+        "state_region",
+        "postal_code",
+        "country",
+        "website",
+        "legal_form",
+        "vertical_type",
+        "business_phone",
+        "point_of_contact_email",
+      ];
 
       for (const field of requiredFields) {
         if (!formData[field as keyof OnboardingData]?.trim()) {
@@ -145,12 +105,68 @@ export default function Onboarding() {
         }
       }
 
-      // Here you would typically call your TCR API for brand verification
-      console.log("Submitting brand verification:", formData);
+      // Get current user
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // Get user's company
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("company_id")
+        .eq("id", user.id)
+        .single();
 
+      if (!profile?.company_id) {
+        throw new Error("No company found for user");
+      }
+
+      // Update company with onboarding data
+      const { error: companyError } = await supabase
+        .from("companies")
+        .update({
+          legal_company_name: formData.legal_company_name,
+          dba_brand_name: formData.dba_brand_name,
+          country_of_registration: formData.country_of_registration,
+          tax_number_ein: formData.tax_number_ein,
+          tax_issuing_country: formData.tax_issuing_country,
+          address_street: formData.address_street,
+          city: formData.city,
+          state_region: formData.state_region,
+          postal_code: formData.postal_code,
+          country: formData.country,
+          website: formData.website,
+          vertical_type: formData.vertical_type,
+          legal_form: formData.legal_form,
+          business_phone: formData.business_phone,
+          point_of_contact_email: formData.point_of_contact_email,
+          brand_verification_status: "submitted",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", profile.company_id);
+
+      if (companyError) {
+        console.error("Company update error:", companyError);
+        throw companyError;
+      }
+
+      // Create onboarding submission record
+      const { error: submissionError } = await supabase
+        .from("onboarding_submissions")
+        .insert({
+          user_id: user.id,
+          company_id: profile.company_id,
+          submission_data: formData,
+          status: "submitted",
+        });
+
+      if (submissionError) {
+        console.error("Submission error:", submissionError);
+        throw submissionError;
+      }
+
+      console.log("Brand verification submitted successfully:", formData);
       toast.success("Brand verification submitted successfully!");
       setCurrentStep("campaign");
     } catch (error) {
@@ -166,12 +182,93 @@ export default function Onboarding() {
   const handleCampaignApproval = async () => {
     setLoading(true);
     try {
-      // Campaign approval is automatic based on brand verification
-      console.log("Completing onboarding with brand data:", formData);
+      // Get current user and company
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
 
-      // Simulate processing
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("company_id")
+        .eq("id", user.id)
+        .single();
 
+      if (!profile?.company_id) {
+        throw new Error("No company found for user");
+      }
+
+      // Create a brand record for the company
+      const { data: brand, error: brandError } = await supabase
+        .from("brands")
+        .insert({
+          company_id: profile.company_id,
+          brand_name: formData.legal_company_name,
+          dba_name: formData.dba_brand_name,
+          vertical_type: formData.vertical_type,
+          brand_verification_status: "approved",
+          brand_verification_date: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (brandError) {
+        console.error("Brand creation error:", brandError);
+        throw brandError;
+      }
+
+      // Create a default campaign for the brand
+      const { data: campaign, error: campaignError } = await supabase
+        .from("campaigns")
+        .insert({
+          brand_id: brand.id,
+          campaign_name: `${formData.legal_company_name} - Default Campaign`,
+          description: "Default campaign created during onboarding",
+          use_case: "General business communications",
+          campaign_approval_status: "approved",
+          campaign_approval_date: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (campaignError) {
+        console.error("Campaign creation error:", campaignError);
+        throw campaignError;
+      }
+
+      // Update company verification status
+      const { error: companyUpdateError } = await supabase
+        .from("companies")
+        .update({
+          brand_verification_status: "approved",
+          brand_verification_date: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", profile.company_id);
+
+      if (companyUpdateError) {
+        console.error("Company update error:", companyUpdateError);
+        throw companyUpdateError;
+      }
+
+      // Update onboarding submission status
+      const { error: submissionUpdateError } = await supabase
+        .from("onboarding_submissions")
+        .update({
+          status: "approved",
+          processed_at: new Date().toISOString(),
+        })
+        .eq("user_id", user.id)
+        .eq("company_id", profile.company_id)
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      if (submissionUpdateError) {
+        console.error("Submission update error:", submissionUpdateError);
+        throw submissionUpdateError;
+      }
+
+      console.log("Onboarding completed successfully:", { brand, campaign });
       toast.success("Onboarding completed successfully!");
       setCurrentStep("complete");
     } catch (error) {
@@ -438,7 +535,10 @@ export default function Onboarding() {
                   type="email"
                   value={formData.point_of_contact_email}
                   onChange={(e) =>
-                    setFormData({ ...formData, point_of_contact_email: e.target.value })
+                    setFormData({
+                      ...formData,
+                      point_of_contact_email: e.target.value,
+                    })
                   }
                   className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                   placeholder="contact@company.com"
@@ -522,45 +622,47 @@ export default function Onboarding() {
               processed automatically based on your company information.
             </p>
 
-                          <div className="bg-blue-900/20 border border-blue-800 rounded-lg p-6 mb-8">
-                <h3 className="text-lg font-semibold text-blue-400 mb-4">
-                  Brand Information Submitted
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
-                  <div>
-                    <span className="text-gray-400">Company:</span>
-                    <span className="ml-2">{formData.legal_company_name}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400">Legal Form:</span>
-                    <span className="ml-2">
-                      {formData.legal_form.replace("_", " ")}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400">Vertical:</span>
-                    <span className="ml-2">
-                      {formData.vertical_type.replace("_", " ")}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400">Country:</span>
-                    <span className="ml-2">{formData.country}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400">Website:</span>
-                    <span className="ml-2">{formData.website}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400">Business Phone:</span>
-                    <span className="ml-2">{formData.business_phone}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400">Contact Email:</span>
-                    <span className="ml-2">{formData.point_of_contact_email}</span>
-                  </div>
+            <div className="bg-blue-900/20 border border-blue-800 rounded-lg p-6 mb-8">
+              <h3 className="text-lg font-semibold text-blue-400 mb-4">
+                Brand Information Submitted
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+                <div>
+                  <span className="text-gray-400">Company:</span>
+                  <span className="ml-2">{formData.legal_company_name}</span>
+                </div>
+                <div>
+                  <span className="text-gray-400">Legal Form:</span>
+                  <span className="ml-2">
+                    {formData.legal_form.replace("_", " ")}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-400">Vertical:</span>
+                  <span className="ml-2">
+                    {formData.vertical_type.replace("_", " ")}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-400">Country:</span>
+                  <span className="ml-2">{formData.country}</span>
+                </div>
+                <div>
+                  <span className="text-gray-400">Website:</span>
+                  <span className="ml-2">{formData.website}</span>
+                </div>
+                <div>
+                  <span className="text-gray-400">Business Phone:</span>
+                  <span className="ml-2">{formData.business_phone}</span>
+                </div>
+                <div>
+                  <span className="text-gray-400">Contact Email:</span>
+                  <span className="ml-2">
+                    {formData.point_of_contact_email}
+                  </span>
                 </div>
               </div>
+            </div>
 
             <div className="flex space-x-4">
               <Button
