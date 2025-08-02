@@ -11,6 +11,7 @@ interface UserProfile {
   stripe_customer_id?: string;
   payment_date?: string;
   created_at: string;
+  updated_at: string;
 }
 
 interface OnboardingStep {
@@ -93,7 +94,7 @@ export default function Dashboard() {
     // Listen for auth state changes (simplified)
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_OUT") {
         window.location.href = "/login";
       }
