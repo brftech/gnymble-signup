@@ -29,9 +29,10 @@ export default function Onboarding() {
     postal_code: "",
     country: "",
     website: "",
-    vertical_type: "CIGAR_RETAIL", // Pre-filled
-    legal_form: "PRIVATE_PROFIT", // Pre-filled
+    vertical_type: "RETAIL_AND_CONSUMER_PRODUCTS", // Default to retail as specified
+    legal_form: "PRIVATE_PROFIT", // Default to private profit as specified
     business_phone: "",
+    support_email: "", // New support email field
     point_of_contact_email: "",
     stock_symbol: "",
     stock_exchange: "",
@@ -76,6 +77,7 @@ export default function Onboarding() {
           last_name: data.full_name?.split(" ").slice(1).join(" ") || "",
           mobile_phone: data.phone || "",
           business_phone: data.phone || "", // Pre-fill with user's phone
+          support_email: data.email || "", // Pre-fill support email with user's email
           point_of_contact_email: data.email || "", // Pre-fill with user's email
         }));
       }
@@ -620,6 +622,25 @@ export default function Onboarding() {
                 />
               </div>
 
+              {/* Support Email */}
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Support Email Address *
+                </label>
+                <input
+                  type="email"
+                  value={formData.support_email}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      support_email: e.target.value,
+                    })
+                  }
+                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="support@company.com"
+                />
+              </div>
+
               {/* Point of Contact Email */}
               <div>
                 <label className="block text-sm font-medium mb-2">
@@ -670,11 +691,11 @@ export default function Onboarding() {
                   }
                   className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 >
-                  <option value="CIGAR_RETAIL">Cigar Retail</option>
-                  <option value="SPEAKEASY">Speakeasy</option>
-                  <option value="RESTAURANT">Restaurant</option>
-                  <option value="BAR">Bar</option>
-                  <option value="LOUNGE">Lounge</option>
+                  <option value="RETAIL_AND_CONSUMER_PRODUCTS">Retail and Consumer Products</option>
+                  <option value="FOOD_AND_BEVERAGE">Food and Beverage</option>
+                  <option value="HEALTHCARE">Healthcare</option>
+                  <option value="FINANCIAL_SERVICES">Financial Services</option>
+                  <option value="EDUCATION">Education</option>
                   <option value="OTHER">Other</option>
                 </select>
               </div>

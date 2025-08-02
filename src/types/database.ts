@@ -19,7 +19,7 @@ export interface Company {
   business_phone?: string;
   point_of_contact_email?: string;
   tcr_brand_id?: string;
-  brand_verification_status?: 'pending' | 'submitted' | 'approved' | 'rejected';
+  brand_verification_status?: "pending" | "submitted" | "approved" | "rejected";
   brand_verification_date?: string;
   created_at: string;
   updated_at: string;
@@ -33,7 +33,7 @@ export interface Brand {
   description?: string;
   vertical_type?: string;
   tcr_brand_id?: string;
-  brand_verification_status?: 'pending' | 'submitted' | 'approved' | 'rejected';
+  brand_verification_status?: "pending" | "submitted" | "approved" | "rejected";
   brand_verification_date?: string;
   created_at: string;
   updated_at: string;
@@ -46,7 +46,7 @@ export interface Campaign {
   description?: string;
   use_case?: string;
   tcr_campaign_id?: string;
-  campaign_approval_status?: 'pending' | 'submitted' | 'approved' | 'rejected';
+  campaign_approval_status?: "pending" | "submitted" | "approved" | "rejected";
   campaign_approval_date?: string;
   created_at: string;
   updated_at: string;
@@ -57,8 +57,8 @@ export interface PhoneNumber {
   phone_number: string;
   country_code?: string;
   area_code?: string;
-  phone_type?: 'local' | 'toll-free' | 'international';
-  status?: 'available' | 'assigned' | 'suspended' | 'deactivated';
+  phone_type?: "local" | "toll-free" | "international";
+  status?: "available" | "assigned" | "suspended" | "deactivated";
   twilio_sid?: string;
   twilio_phone_sid?: string;
   purchase_date?: string;
@@ -72,7 +72,7 @@ export interface CampaignPhoneAssignment {
   campaign_id: string;
   phone_number_id: string;
   assigned_date?: string;
-  status?: 'active' | 'inactive' | 'suspended';
+  status?: "active" | "inactive" | "suspended";
   created_at: string;
   updated_at: string;
 }
@@ -82,7 +82,7 @@ export interface OnboardingSubmission {
   user_id: string;
   company_id: string;
   submission_data: Record<string, any>;
-  status?: 'submitted' | 'processing' | 'approved' | 'rejected';
+  status?: "submitted" | "processing" | "approved" | "rejected";
   tcr_brand_id?: string;
   tcr_campaign_id?: string;
   submitted_at?: string;
@@ -105,14 +105,14 @@ export interface UserProfile {
 
 export interface UserRole {
   user_id: string;
-  role: 'user' | 'admin' | 'customer';
+  role: "user" | "admin" | "customer";
   created_at: string;
 }
 
 export interface UserCompanyRole {
   user_id: string;
   company_id: string;
-  role: 'owner' | 'admin' | 'member';
+  role: "owner" | "admin" | "member";
   is_primary: boolean;
   created_at: string;
 }
@@ -159,6 +159,7 @@ export interface OnboardingData {
   vertical_type: string;
   legal_form: string;
   business_phone: string;
+  support_email: string;
   point_of_contact_email: string;
 
   // Campaign Approval Fields
@@ -171,4 +172,4 @@ export interface OnboardingData {
   first_name: string;
   last_name: string;
   mobile_phone: string;
-} 
+}
