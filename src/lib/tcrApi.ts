@@ -248,8 +248,8 @@ export function transformOnboardingDataToTCR(onboardingData: any): {
       country: onboardingData.country || 'United States',
     },
     website: onboardingData.website || '',
-    verticalType: 'RETAIL_AND_CONSUMER_PRODUCTS', // Default to retail as specified
-    legalForm: 'PRIVATE_PROFIT', // Default to private profit as specified
+    verticalType: onboardingData.vertical_type || 'RETAIL_AND_CONSUMER_PRODUCTS', // Use form value with fallback
+    legalForm: onboardingData.legal_form || 'PRIVATE_PROFIT', // Use form value with fallback
     businessPhone: onboardingData.business_phone,
     pointOfContact: {
       firstName: onboardingData.first_name,
@@ -264,7 +264,7 @@ export function transformOnboardingDataToTCR(onboardingData: any): {
     campaignName: `${onboardingData.legal_company_name} - Default Campaign`,
     description: "Default campaign created during onboarding",
     useCase: "General business communications",
-    verticalType: 'RETAIL_AND_CONSUMER_PRODUCTS', // Default to retail as specified
+    verticalType: onboardingData.vertical_type || 'RETAIL_AND_CONSUMER_PRODUCTS', // Use form value with fallback
     referenceId: onboardingData.reference_id || '',
     dunsGiinLei: onboardingData.duns_giin_lei || '',
   };
