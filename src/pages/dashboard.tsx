@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "../lib/supabaseClient";
 import { testWebhookLogic } from "../lib/testWebhook";
+import { testDatabaseSimple } from "../lib/testDatabaseSimple";
 
 interface UserProfile {
   id: string;
@@ -184,6 +185,19 @@ export default function Dashboard() {
     } else {
       toast.error(`Webhook test failed: ${result.error ? String(result.error) : 'Unknown error'}`);
       console.error("❌ Webhook test error:", result.error);
+    }
+  };
+
+  const handleTestDatabaseSimple = async () => {
+    console.log("🧪 Testing simple database operations...");
+    const result = await testDatabaseSimple();
+    
+    if (result.success) {
+      toast.success("Database test successful! RLS is disabled.");
+      console.log("✅ Database test result:", result);
+    } else {
+      toast.error(`Database test failed: ${result.error ? String(result.error) : 'Unknown error'}`);
+      console.error("❌ Database test error:", result.error);
     }
   };
 
@@ -431,6 +445,13 @@ export default function Dashboard() {
                     className="bg-gray-700 hover:bg-gray-600 px-6 py-3 rounded-md font-medium text-white transition-colors"
                   >
                     Test Webhook Logic (Debug)
+                  </button>
+                  
+                  <button
+                    onClick={handleTestDatabaseSimple}
+                    className="bg-blue-700 hover:bg-blue-600 px-6 py-3 rounded-md font-medium text-white transition-colors"
+                  >
+                    Test Database (No RLS)
                   </button>
                 </div>
               </>
