@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 // TCR Configuration
-const TCR_BASE_URL = "https://csp-api-staging.campaignregistry.com/api";
+const TCR_BASE_URL = "https://csp-api-staging.campaignregistry.com";
 const TCR_SECRET = "7456068D62D049C8A72FC32352D8F792";
 const TCR_KEY = "AA36CC19C3454EFC8937E7407329FB9F";
 
@@ -188,7 +188,7 @@ async function handleBrandStatusCheck(data: { brandId: string }) {
   try {
     console.log("🔍 Checking brand status for:", data.brandId);
 
-    const response = await fetch(`${TCR_BASE_URL}/v2/brands/${data.brandId}`, {
+    const response = await fetch(`${TCR_BASE_URL}/v2/brand/${data.brandId}`, {
       method: "GET",
       headers: getAuthHeaders(),
     });
@@ -226,7 +226,7 @@ async function handleCampaignStatusCheck(data: { campaignId: string }) {
     console.log("🔍 Checking campaign status for:", data.campaignId);
 
     const response = await fetch(
-      `${TCR_BASE_URL}/v2/campaigns/${data.campaignId}`,
+      `${TCR_BASE_URL}/v2/campaign/${data.campaignId}`,
       {
         method: "GET",
         headers: getAuthHeaders(),
