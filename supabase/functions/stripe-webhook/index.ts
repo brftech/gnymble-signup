@@ -32,14 +32,17 @@ serve(async (req) => {
       Deno.env.get("STRIPE_WEBHOOK_SECRET") || ""
     );
 
-    console.log("Received Stripe webhook:", event.type);
+    console.log("🎯 Received Stripe webhook:", event.type);
+    console.log("📋 Event data:", JSON.stringify(event.data, null, 2));
 
     // Handle checkout.session.completed event
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
 
-      console.log("Processing completed checkout session:", session.id);
-      console.log("Session metadata:", session.metadata);
+      console.log("💰 Processing completed checkout session:", session.id);
+      console.log("📋 Session metadata:", session.metadata);
+      console.log("👤 User ID from metadata:", session.metadata?.user_id);
+      console.log("📧 Email from metadata:", session.metadata?.email);
 
       // Extract user_id from metadata (our reliable identifier)
       const userId = session.metadata?.user_id;

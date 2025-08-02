@@ -36,23 +36,23 @@ export default function Dashboard() {
       required: true,
     },
     {
-      id: "company-setup",
-      title: "Company Setup",
-      description: "Configure your company information and preferences",
-      completed: false,
+      id: "brand-verification",
+      title: "Brand Verification",
+      description: "Submit company information for TCR compliance",
+      completed: false, // Will be updated based on onboarding status
       required: true,
     },
     {
-      id: "sms-verification",
-      title: "SMS Verification",
-      description: "Verify your phone number for SMS capabilities",
-      completed: false,
+      id: "campaign-approval",
+      title: "Campaign Approval",
+      description: "Get campaign approved for SMS messaging",
+      completed: false, // Will be updated based on onboarding status
       required: true,
     },
     {
       id: "platform-access",
       title: "Platform Access",
-      description: "Get access to the Gnymble platform dashboard",
+      description: "Access your Gnymble dashboard and start messaging",
       completed: false,
       required: true,
     },
@@ -159,6 +159,10 @@ export default function Dashboard() {
     window.location.href = "/payment";
   };
 
+  const handleOnboarding = () => {
+    window.location.href = "/onboarding";
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     window.location.href = "/login";
@@ -224,13 +228,13 @@ export default function Dashboard() {
         {profile?.payment_status === "paid" && (
           <div className="bg-gradient-to-r from-green-900/20 to-emerald-900/20 border border-green-800 rounded-lg p-6 mb-8">
             <div className="flex items-center justify-between">
-              <div>
+              <div className="flex-1">
                 <h2 className="text-xl font-semibold text-green-400 mb-2">
                   Payment Completed ✓
                 </h2>
-                <p className="text-gray-300">
-                  Welcome to Gnymble! Your account is now active and ready to
-                  use.
+                <p className="text-gray-300 mb-4">
+                  Welcome to Gnymble! Your payment is complete. Now let's get
+                  you set up for SMS compliance.
                   {profile.payment_date && (
                     <span className="block mt-1 text-sm text-gray-400">
                       Payment completed on{" "}
@@ -238,8 +242,14 @@ export default function Dashboard() {
                     </span>
                   )}
                 </p>
+                <button
+                  onClick={handleOnboarding}
+                  className="bg-[#d67635] hover:bg-[#c96528] px-6 py-3 rounded-md font-semibold text-white transition-colors"
+                >
+                  Start Onboarding →
+                </button>
               </div>
-              <div className="text-green-400 text-2xl">✓</div>
+              <div className="text-green-400 text-2xl ml-4">✓</div>
             </div>
           </div>
         )}
@@ -295,10 +305,16 @@ export default function Dashboard() {
                   }`}
                 >
                   {profile?.payment_status === "paid"
-                    ? "Active"
+                    ? "Active - Ready for Onboarding"
                     : "Pending Payment"}
                 </span>
               </div>
+              {profile?.payment_status === "paid" && (
+                <div>
+                  <span className="text-gray-400">Onboarding:</span>
+                  <span className="ml-2 text-blue-400">Ready to Start</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -339,6 +355,26 @@ export default function Dashboard() {
                     Pay Now
                   </button>
                 )}
+                {step.id === "brand-verification" &&
+                  profile?.payment_status === "paid" &&
+                  !step.completed && (
+                    <button
+                      onClick={handleOnboarding}
+                      className="bg-[#d67635] hover:bg-[#c96528] px-4 py-2 rounded-md text-sm font-medium"
+                    >
+                      Start Onboarding
+                    </button>
+                  )}
+                {step.id === "campaign-approval" &&
+                  profile?.payment_status === "paid" &&
+                  !step.completed && (
+                    <button
+                      onClick={handleOnboarding}
+                      className="bg-[#d67635] hover:bg-[#c96528] px-4 py-2 rounded-md text-sm font-medium"
+                    >
+                      Continue Onboarding
+                    </button>
+                  )}
               </div>
             ))}
           </div>
@@ -350,10 +386,29 @@ export default function Dashboard() {
             Next Steps
           </h3>
           <div className="space-y-3 text-gray-300">
-            <p>1. Complete your payment to unlock platform access</p>
-            <p>2. Set up your company preferences and SMS settings</p>
-            <p>3. Verify your phone number for SMS capabilities</p>
-            <p>4. Access your Gnymble dashboard and start messaging</p>
+            {profile?.payment_status !== "paid" ? (
+              <>
+                <p>1. Complete your payment to unlock platform access</p>
+                <p>2. Complete brand verification for SMS compliance</p>
+                <p>3. Get campaign approval for messaging</p>
+                <p>4. Access your Gnymble dashboard and start messaging</p>
+              </>
+            ) : (
+              <>
+                <p>1. ✅ Payment completed - Ready for onboarding</p>
+                <p>2. Complete brand verification (TCR compliance)</p>
+                <p>3. Get campaign approval for SMS messaging</p>
+                <p>4. Access your Gnymble dashboard and start messaging</p>
+                <div className="mt-4">
+                  <button
+                    onClick={handleOnboarding}
+                    className="bg-[#d67635] hover:bg-[#c96528] px-6 py-3 rounded-md font-semibold text-white transition-colors"
+                  >
+                    Start Onboarding Process →
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

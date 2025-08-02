@@ -6,6 +6,7 @@ import Payment from "./pages/payment";
 import ResetPassword from "./pages/reset-password";
 import AuthCallback from "./pages/auth-callback";
 import CompleteProfile from "./pages/complete-profile";
+import Onboarding from "./pages/onboarding";
 import SimpleNavigation from "./components/SimpleNavigation";
 import LoginNavigation from "./components/LoginNavigation";
 
@@ -15,12 +16,15 @@ function App() {
   const isResetPasswordPage = location.pathname === "/reset-password";
   const isDashboardPage = location.pathname === "/dashboard";
   const isCompleteProfilePage = location.pathname === "/complete-profile";
+  const isOnboardingPage = location.pathname === "/onboarding";
 
   return (
     <>
       {isLoginPage || isResetPasswordPage ? (
         <LoginNavigation />
-      ) : isDashboardPage || isCompleteProfilePage ? null : (
+      ) : isDashboardPage ||
+        isCompleteProfilePage ||
+        isOnboardingPage ? null : (
         <SimpleNavigation />
       )}
       <Routes>
@@ -30,6 +34,7 @@ function App() {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/complete-profile" element={<CompleteProfile />} />
+        <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/payment" element={<Payment />} />
       </Routes>

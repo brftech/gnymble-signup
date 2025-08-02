@@ -222,7 +222,6 @@ export default function Payment() {
         <div className="space-y-4">
           <button
             onClick={() => {
-              alert("🔘 PAYMENT BUTTON CLICKED - Check console for details");
               console.log(
                 "🔘 PAYMENT BUTTON CLICKED - About to call redirect function"
               );
