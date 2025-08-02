@@ -60,68 +60,95 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-4 pt-16">
-      <div className="max-w-md w-full space-y-6 text-center">
-        <h1 className="text-3xl font-bold">
-          Welcome back to <span className="text-[#d67635]">G</span>nymble
-        </h1>
-        <p className="text-sm text-gray-400">
-          Sign in to your account to continue
-        </p>
+    <div className="min-h-screen bg-background text-foreground">
+      {/* Hero Section */}
+      <section className="relative pt-32 pb-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto text-center">
+          {/* Platform Capabilities Tag */}
+          <div className="inline-flex items-center px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-8">
+            ACCOUNT ACCESS
+          </div>
 
-        <button
-          onClick={handleGoogleSignIn}
-          disabled={loading}
-          className="w-full py-3 bg-[#d67635] hover:bg-[#c96528] rounded-md font-semibold text-white disabled:opacity-50"
-        >
-          {loading ? "Signing in..." : "Sign in with Google"}
-        </button>
+          {/* Main Headline */}
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
+            Welcome back to
+            <br />
+            <span className="text-primary">Gnymble</span>
+          </h1>
 
-        <div className="text-gray-600 text-sm flex items-center justify-center gap-2">
-          <span className="h-px w-20 bg-gray-700"></span>
-          or
-          <span className="h-px w-20 bg-gray-700"></span>
+          {/* Sub-headline */}
+          <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-12">
+            Sign in to your account to continue building authentic relationships while navigating industry regulations.
+          </p>
+
+          {/* Login Form */}
+          <div className="max-w-md mx-auto">
+            <div className="bg-card border border-border rounded-lg p-6 space-y-6">
+              <div className="text-center mb-6">
+                <h2 className="text-xl font-semibold mb-2">
+                  Sign In to Your Account
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Access your Gnymble dashboard
+                </p>
+              </div>
+
+              <button
+                onClick={handleGoogleSignIn}
+                disabled={loading}
+                className="w-full py-3 bg-primary hover:bg-primary-glow rounded-md font-semibold text-primary-foreground disabled:opacity-50 transition-colors"
+              >
+                {loading ? "Signing in..." : "Sign in with Google"}
+              </button>
+
+              <div className="text-muted-foreground text-sm flex items-center justify-center gap-2">
+                <span className="h-px w-20 bg-border"></span>
+                or
+                <span className="h-px w-20 bg-border"></span>
+              </div>
+
+              <form onSubmit={handleEmailLogin} className="space-y-4 text-left">
+                <input
+                  name="email"
+                  type="email"
+                  placeholder="Email Address"
+                  onChange={handleChange}
+                  value={form.email}
+                  required
+                  className="w-full p-3 rounded-md bg-input border border-border focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
+                />
+
+                <input
+                  name="password"
+                  type="password"
+                  placeholder="Password"
+                  onChange={handleChange}
+                  value={form.password}
+                  required
+                  className="w-full p-3 rounded-md bg-input border border-border focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
+                />
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-3 bg-primary hover:bg-primary-glow rounded-md font-semibold text-primary-foreground disabled:opacity-50 transition-colors"
+                >
+                  {loading ? "Signing in..." : "Sign In"}
+                </button>
+
+                {error && <p className="text-destructive text-sm mt-2">{error}</p>}
+              </form>
+
+              <p className="text-sm text-muted-foreground text-center mt-6">
+                Don't have an account?{" "}
+                <a href="/signup" className="underline text-primary hover:text-primary-glow">
+                  Sign up
+                </a>
+              </p>
+            </div>
+          </div>
         </div>
-
-        <form onSubmit={handleEmailLogin} className="space-y-4 text-left">
-          <input
-            name="email"
-            type="email"
-            placeholder="Email Address"
-            onChange={handleChange}
-            value={form.email}
-            required
-            className="w-full p-3 rounded-md bg-gray-900 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#d67635]"
-          />
-
-          <input
-            name="password"
-            type="password"
-            placeholder="Password"
-            onChange={handleChange}
-            value={form.password}
-            required
-            className="w-full p-3 rounded-md bg-gray-900 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#d67635]"
-          />
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 bg-[#d67635] hover:bg-[#c96528] rounded-md font-semibold text-white disabled:opacity-50"
-          >
-            {loading ? "Signing in..." : "Sign In"}
-          </button>
-
-          {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
-        </form>
-
-        <p className="text-sm text-gray-500">
-          Don't have an account?{" "}
-          <a href="/signup" className="underline text-gray-300 hover:text-white">
-            Sign up
-          </a>
-        </p>
-      </div>
+      </section>
     </div>
   );
 }
