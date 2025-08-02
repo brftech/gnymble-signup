@@ -60,7 +60,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-4">
+    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-4 pt-16">
       <div className="max-w-md w-full space-y-6 text-center">
         <h1 className="text-3xl font-bold">
           Welcome back to <span className="text-[#d67635]">G</span>nymble

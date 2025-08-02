@@ -318,307 +318,351 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-4">
-      <div className="max-w-md w-full space-y-6 text-center">
-        <h1 className="text-3xl font-bold">
-          Get Started with <span className="text-[#d67635]">G</span>nymble
-        </h1>
-        <p className="text-sm text-gray-400">
-          A premium SMS platform for bold businesses. Built for compliance. Made
-          for character.
-        </p>
-
-        <button
-          onClick={handleGoogleSignIn}
-          disabled={loading}
-          className="w-full py-3 bg-[#d67635] hover:bg-[#c96528] rounded-md font-semibold text-white disabled:opacity-50"
-        >
-          {loading ? "Signing up..." : "Sign Up with Google"}
-        </button>
-
-        <div className="text-gray-600 text-sm flex items-center justify-center gap-2">
-          <span className="h-px w-20 bg-gray-700"></span>
-          or
-          <span className="h-px w-20 bg-gray-700"></span>
-        </div>
-
-        <form onSubmit={handleEmailSignup} className="space-y-4 text-left">
-          <div className="flex gap-4">
-            <input
-              name="firstName"
-              placeholder="First Name"
-              onChange={handleChange}
-              value={form.firstName}
-              required
-              className="w-1/2 p-3 rounded-md bg-gray-900 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#d67635]"
-            />
-            <input
-              name="lastName"
-              placeholder="Last Name"
-              onChange={handleChange}
-              value={form.lastName}
-              required
-              className="w-1/2 p-3 rounded-md bg-gray-900 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#d67635]"
-            />
+    <div className="min-h-screen bg-background text-foreground">
+      {/* Hero Section */}
+      <section className="relative pt-32 pb-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto text-center">
+          {/* Platform Capabilities Tag */}
+          <div className="inline-flex items-center px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-8">
+            PLATFORM CAPABILITIES
           </div>
 
-          <div className="relative">
-            <input
-              name="email"
-              type="email"
-              placeholder="Work Email"
-              onChange={handleChange}
-              value={form.email}
-              required
-              className={`w-full p-3 rounded-md bg-gray-900 border focus:outline-none focus:ring-2 focus:ring-[#d67635] ${
-                emailExists
-                  ? "border-red-500 bg-red-900/20"
-                  : checkingEmail
-                  ? "border-yellow-500 bg-yellow-900/20"
-                  : "border-gray-700"
-              }`}
-            />
-            {checkingEmail && (
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#d67635]"></div>
+          {/* Main Headline */}
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
+            Join the Premium
+            <br />
+            <span className="text-primary">SMS Revolution</span>
+          </h1>
+
+          {/* Sub-headline */}
+          <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-12">
+            Get started with Gnymble's intelligent SMS platform designed for
+            premium hospitality venues. Build authentic relationships while
+            navigating industry regulations with confidence.
+          </p>
+
+          {/* Sign Up Form */}
+          <div className="max-w-md mx-auto">
+            <div className="bg-card border border-border rounded-lg p-6 space-y-6">
+              <div className="text-center mb-6">
+                <h2 className="text-xl font-semibold mb-2">
+                  Create Your Account
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Start your journey with Gnymble today
+                </p>
               </div>
-            )}
-            {emailExists && (
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-red-400">
-                <svg
-                  className="w-5 h-5"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                    clipRule="evenodd"
+
+              <button
+                onClick={handleGoogleSignIn}
+                disabled={loading}
+                className="w-full py-3 bg-primary hover:bg-primary-glow rounded-md font-semibold text-primary-foreground disabled:opacity-50 transition-colors"
+              >
+                {loading ? "Signing up..." : "Sign Up with Google"}
+              </button>
+
+              <div className="text-muted-foreground text-sm flex items-center justify-center gap-2">
+                <span className="h-px w-20 bg-border"></span>
+                or
+                <span className="h-px w-20 bg-border"></span>
+              </div>
+
+              <form
+                onSubmit={handleEmailSignup}
+                className="space-y-4 text-left"
+              >
+                <div className="flex gap-4">
+                  <input
+                    name="firstName"
+                    placeholder="First Name"
+                    onChange={handleChange}
+                    value={form.firstName}
+                    required
+                    className="w-1/2 p-3 rounded-md bg-input border border-border focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
                   />
-                </svg>
-              </div>
-            )}
-          </div>
-          {emailExists && (
-            <p className="text-red-400 text-sm">
-              An account with this email already exists. Please use a different
-              email or sign in.
-            </p>
-          )}
+                  <input
+                    name="lastName"
+                    placeholder="Last Name"
+                    onChange={handleChange}
+                    value={form.lastName}
+                    required
+                    className="w-1/2 p-3 rounded-md bg-input border border-border focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
+                  />
+                </div>
 
-          {/* Phone field with country code */}
-          <div className="flex gap-2">
-            <select
-              name="countryCode"
-              value={form.countryCode}
-              onChange={handleChange}
-              className="w-24 p-3 rounded-md bg-gray-900 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#d67635] text-sm"
-            >
-              {countryCodes.map((country) => (
-                <option key={country.code} value={country.code}>
-                  {country.flag} {country.code}
-                </option>
-              ))}
-            </select>
-            <input
-              name="phone"
-              type="tel"
-              placeholder="Cell Phone Number"
-              onChange={handleChange}
-              value={form.phone}
-              required
-              className={`flex-1 p-3 rounded-md bg-gray-900 border focus:outline-none focus:ring-2 focus:ring-[#d67635] ${
-                form.phone
-                  ? phoneValidation
-                    ? "border-green-500"
-                    : "border-red-500"
-                  : "border-gray-700"
-              }`}
-            />
-          </div>
+                <div className="relative">
+                  <input
+                    name="email"
+                    type="email"
+                    placeholder="Work Email"
+                    onChange={handleChange}
+                    value={form.email}
+                    required
+                    className={`w-full p-3 rounded-md bg-input border focus:outline-none focus:ring-2 focus:ring-primary text-foreground ${
+                      emailExists
+                        ? "border-destructive bg-destructive/10"
+                        : checkingEmail
+                        ? "border-primary bg-primary/10"
+                        : "border-border"
+                    }`}
+                  />
+                  {checkingEmail && (
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
+                    </div>
+                  )}
+                  {emailExists && (
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-destructive">
+                      <svg
+                        className="w-5 h-5"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+                {emailExists && (
+                  <p className="text-destructive text-sm">
+                    An account with this email already exists. Please use a
+                    different email or sign in.
+                  </p>
+                )}
 
-          {/* Phone validation indicator */}
-          {form.phone && (
-            <div
-              className={`text-xs flex items-center gap-2 ${
-                phoneValidation ? "text-green-400" : "text-red-400"
-              }`}
-            >
-              <span>{phoneValidation ? "✓" : "✗"}</span>
-              <span>
-                {phoneValidation
-                  ? "Valid phone number format"
-                  : "Please enter a valid phone number format (10-15 digits)"}
-              </span>
-            </div>
-          )}
+                {/* Phone field with country code */}
+                <div className="flex gap-2">
+                  <select
+                    name="countryCode"
+                    value={form.countryCode}
+                    onChange={handleChange}
+                    className="w-24 p-3 rounded-md bg-input border border-border focus:outline-none focus:ring-2 focus:ring-primary text-foreground text-sm"
+                  >
+                    {countryCodes.map((country) => (
+                      <option key={country.code} value={country.code}>
+                        {country.flag} {country.code}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    name="phone"
+                    type="tel"
+                    placeholder="Cell Phone Number"
+                    onChange={handleChange}
+                    value={form.phone}
+                    required
+                    className={`flex-1 p-3 rounded-md bg-input border focus:outline-none focus:ring-2 focus:ring-primary text-foreground ${
+                      form.phone
+                        ? phoneValidation
+                          ? "border-green-500"
+                          : "border-red-500"
+                        : "border-border"
+                    }`}
+                  />
+                </div>
 
-          <input
-            name="company"
-            placeholder="Company Name"
-            onChange={handleChange}
-            value={form.company}
-            required
-            className="w-full p-3 rounded-md bg-gray-900 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#d67635]"
-          />
+                {/* Phone validation indicator */}
+                {form.phone && (
+                  <div
+                    className={`text-xs flex items-center gap-2 ${
+                      phoneValidation ? "text-green-400" : "text-red-400"
+                    }`}
+                  >
+                    <span>{phoneValidation ? "✓" : "✗"}</span>
+                    <span>
+                      {phoneValidation
+                        ? "Valid phone number format"
+                        : "Please enter a valid phone number format (10-15 digits)"}
+                    </span>
+                  </div>
+                )}
 
-          {/* Password field with show/hide toggle */}
-          <div className="relative">
-            <input
-              name="password"
-              type={showPassword ? "text" : "password"}
-              placeholder="Password"
-              onChange={handleChange}
-              value={form.password}
-              required
-              className="w-full p-3 pr-12 rounded-md bg-gray-900 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#d67635]"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
-            >
-              {showPassword ? "Hide" : "Show"}
-            </button>
-          </div>
+                <input
+                  name="company"
+                  placeholder="Company Name"
+                  onChange={handleChange}
+                  value={form.company}
+                  required
+                  className="w-full p-3 rounded-md bg-input border border-border focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
+                />
 
-          {/* Password requirements */}
-          {form.password && (
-            <div className="text-xs space-y-1">
-              <p className="text-gray-400 font-medium">
-                Password requirements:
+                {/* Password field with show/hide toggle */}
+                <div className="relative">
+                  <input
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Password"
+                    onChange={handleChange}
+                    value={form.password}
+                    required
+                    className="w-full p-3 pr-12 rounded-md bg-input border border-border focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showPassword ? "Hide" : "Show"}
+                  </button>
+                </div>
+
+                {/* Password requirements */}
+                {form.password && (
+                  <div className="text-xs space-y-1">
+                    <p className="text-gray-400 font-medium">
+                      Password requirements:
+                    </p>
+                    <div className="space-y-1">
+                      <div
+                        className={`flex items-center gap-2 ${
+                          passwordValidation.minLength
+                            ? "text-green-400"
+                            : "text-red-400"
+                        }`}
+                      >
+                        <span>{passwordValidation.minLength ? "✓" : "✗"}</span>
+                        <span>At least 8 characters</span>
+                      </div>
+                      <div
+                        className={`flex items-center gap-2 ${
+                          passwordValidation.hasUpperCase
+                            ? "text-green-400"
+                            : "text-red-400"
+                        }`}
+                      >
+                        <span>
+                          {passwordValidation.hasUpperCase ? "✓" : "✗"}
+                        </span>
+                        <span>One uppercase letter</span>
+                      </div>
+                      <div
+                        className={`flex items-center gap-2 ${
+                          passwordValidation.hasLowerCase
+                            ? "text-green-400"
+                            : "text-red-400"
+                        }`}
+                      >
+                        <span>
+                          {passwordValidation.hasLowerCase ? "✓" : "✗"}
+                        </span>
+                        <span>One lowercase letter</span>
+                      </div>
+                      <div
+                        className={`flex items-center gap-2 ${
+                          passwordValidation.hasNumbers
+                            ? "text-green-400"
+                            : "text-red-400"
+                        }`}
+                      >
+                        <span>{passwordValidation.hasNumbers ? "✓" : "✗"}</span>
+                        <span>One number</span>
+                      </div>
+                      <div
+                        className={`flex items-center gap-2 ${
+                          passwordValidation.hasSpecialChar
+                            ? "text-green-400"
+                            : "text-red-400"
+                        }`}
+                      >
+                        <span>
+                          {passwordValidation.hasSpecialChar ? "✓" : "✗"}
+                        </span>
+                        <span>One special character</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Confirm Password field */}
+                <div className="relative">
+                  <input
+                    name="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="Confirm Password"
+                    onChange={handleChange}
+                    value={form.confirmPassword}
+                    required
+                    className={`w-full p-3 pr-12 rounded-md bg-input border focus:outline-none focus:ring-2 focus:ring-primary text-foreground ${
+                      form.confirmPassword
+                        ? passwordsMatch
+                          ? "border-green-500"
+                          : "border-red-500"
+                        : "border-border"
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showConfirmPassword ? "Hide" : "Show"}
+                  </button>
+                </div>
+
+                {/* Password match indicator */}
+                {form.confirmPassword && (
+                  <div
+                    className={`text-xs flex items-center gap-2 ${
+                      passwordsMatch ? "text-green-400" : "text-red-400"
+                    }`}
+                  >
+                    <span>{passwordsMatch ? "✓" : "✗"}</span>
+                    <span>
+                      {passwordsMatch
+                        ? "Passwords match"
+                        : "Passwords do not match"}
+                    </span>
+                  </div>
+                )}
+
+                {/* reCAPTCHA */}
+                <div className="flex justify-center">
+                  <ReCAPTCHA
+                    ref={recaptchaRef}
+                    sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI" // Test key - replace with your actual key
+                    onChange={handleCaptchaChange}
+                    onExpired={handleCaptchaExpired}
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={
+                    loading ||
+                    !passwordValidation.isValid ||
+                    !passwordsMatch ||
+                    !phoneValidation ||
+                    !captchaToken ||
+                    emailExists ||
+                    checkingEmail
+                  }
+                  className="w-full py-3 bg-primary hover:bg-primary-glow rounded-md font-semibold text-primary-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {loading ? "Signing up..." : "Sign Up with Email"}
+                </button>
+
+                {error && (
+                  <p className="text-destructive text-sm mt-2">{error}</p>
+                )}
+              </form>
+
+              <p className="text-sm text-muted-foreground text-center mt-6">
+                Already have an account?{" "}
+                <a
+                  href="/login"
+                  className="underline text-primary hover:text-primary-glow"
+                >
+                  Log in
+                </a>
               </p>
-              <div className="space-y-1">
-                <div
-                  className={`flex items-center gap-2 ${
-                    passwordValidation.minLength
-                      ? "text-green-400"
-                      : "text-red-400"
-                  }`}
-                >
-                  <span>{passwordValidation.minLength ? "✓" : "✗"}</span>
-                  <span>At least 8 characters</span>
-                </div>
-                <div
-                  className={`flex items-center gap-2 ${
-                    passwordValidation.hasUpperCase
-                      ? "text-green-400"
-                      : "text-red-400"
-                  }`}
-                >
-                  <span>{passwordValidation.hasUpperCase ? "✓" : "✗"}</span>
-                  <span>One uppercase letter</span>
-                </div>
-                <div
-                  className={`flex items-center gap-2 ${
-                    passwordValidation.hasLowerCase
-                      ? "text-green-400"
-                      : "text-red-400"
-                  }`}
-                >
-                  <span>{passwordValidation.hasLowerCase ? "✓" : "✗"}</span>
-                  <span>One lowercase letter</span>
-                </div>
-                <div
-                  className={`flex items-center gap-2 ${
-                    passwordValidation.hasNumbers
-                      ? "text-green-400"
-                      : "text-red-400"
-                  }`}
-                >
-                  <span>{passwordValidation.hasNumbers ? "✓" : "✗"}</span>
-                  <span>One number</span>
-                </div>
-                <div
-                  className={`flex items-center gap-2 ${
-                    passwordValidation.hasSpecialChar
-                      ? "text-green-400"
-                      : "text-red-400"
-                  }`}
-                >
-                  <span>{passwordValidation.hasSpecialChar ? "✓" : "✗"}</span>
-                  <span>One special character</span>
-                </div>
-              </div>
             </div>
-          )}
-
-          {/* Confirm Password field */}
-          <div className="relative">
-            <input
-              name="confirmPassword"
-              type={showConfirmPassword ? "text" : "password"}
-              placeholder="Confirm Password"
-              onChange={handleChange}
-              value={form.confirmPassword}
-              required
-              className={`w-full p-3 pr-12 rounded-md bg-gray-900 border focus:outline-none focus:ring-2 focus:ring-[#d67635] ${
-                form.confirmPassword
-                  ? passwordsMatch
-                    ? "border-green-500"
-                    : "border-red-500"
-                  : "border-gray-700"
-              }`}
-            />
-            <button
-              type="button"
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
-            >
-              {showConfirmPassword ? "Hide" : "Show"}
-            </button>
           </div>
-
-          {/* Password match indicator */}
-          {form.confirmPassword && (
-            <div
-              className={`text-xs flex items-center gap-2 ${
-                passwordsMatch ? "text-green-400" : "text-red-400"
-              }`}
-            >
-              <span>{passwordsMatch ? "✓" : "✗"}</span>
-              <span>
-                {passwordsMatch ? "Passwords match" : "Passwords do not match"}
-              </span>
-            </div>
-          )}
-
-          {/* reCAPTCHA */}
-          <div className="flex justify-center">
-            <ReCAPTCHA
-              ref={recaptchaRef}
-              sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI" // Test key - replace with your actual key
-              onChange={handleCaptchaChange}
-              onExpired={handleCaptchaExpired}
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={
-              loading ||
-              !passwordValidation.isValid ||
-              !passwordsMatch ||
-              !phoneValidation ||
-              !captchaToken ||
-              emailExists ||
-              checkingEmail
-            }
-            className="w-full py-3 bg-[#d67635] hover:bg-[#c96528] rounded-md font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? "Signing up..." : "Sign Up with Email"}
-          </button>
-
-          {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
-        </form>
-
-        <p className="text-sm text-gray-500">
-          Already have an account?{" "}
-          <a href="/login" className="underline text-gray-300 hover:text-white">
-            Log in
-          </a>
-        </p>
-      </div>
+        </div>
+      </section>
     </div>
   );
 }

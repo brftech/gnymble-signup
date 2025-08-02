@@ -136,7 +136,7 @@ export default function Payment() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+      <div className="min-h-screen bg-black text-white flex items-center justify-center pt-16">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#d67635] mx-auto mb-4"></div>
           <p>Loading payment information...</p>
@@ -147,7 +147,7 @@ export default function Payment() {
 
   if (redirecting) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+      <div className="min-h-screen bg-black text-white flex items-center justify-center pt-16">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#d67635] mx-auto mb-4"></div>
           <p>Redirecting to secure payment...</p>
@@ -160,7 +160,7 @@ export default function Payment() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-4">
+    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-4 pt-16">
       <div className="max-w-md w-full space-y-6 text-center">
         <h1 className="text-3xl font-bold">
           Complete Your <span className="text-[#d67635]">G</span>nymble Setup
