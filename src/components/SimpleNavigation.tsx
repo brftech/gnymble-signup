@@ -9,7 +9,7 @@ const SimpleNavigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const navigation = [{ name: "Login", href: "/login" }];
+  const navigation = [];
 
   const isActive = (href: string) => {
     return location.pathname === href;
@@ -49,12 +49,11 @@ const SimpleNavigation = () => {
             ))}
 
             <Button
-              variant="ghost"
               size="sm"
               onClick={() => {
                 window.location.href = "https://gnymble.percytech.com/login";
               }}
-              className="text-muted-foreground hover:text-foreground"
+              className="bg-primary text-primary-foreground hover:bg-primary-glow transition-colors"
             >
               Log In
             </Button>
@@ -92,9 +91,8 @@ const SimpleNavigation = () => {
 
               <div className="px-3 pt-2 space-y-2">
                 <Button
-                  variant="ghost"
                   size="sm"
-                  className="w-full text-muted-foreground hover:text-foreground"
+                  className="w-full bg-primary text-primary-foreground hover:bg-primary-glow transition-colors"
                   onClick={() => {
                     window.location.href = "https://gnymble.percytech.com/login";
                   }}
