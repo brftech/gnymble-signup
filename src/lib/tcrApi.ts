@@ -286,7 +286,7 @@ export function transformOnboardingDataToTCR(onboardingData: {
       firstName: onboardingData.first_name,
       lastName: onboardingData.last_name,
       email:
-        onboardingData.support_email || onboardingData.point_of_contact_email || "", // Use support email as default
+        onboardingData.support_email || onboardingData.point_of_contact_email || "",
       phone: onboardingData.business_phone || onboardingData.mobile_phone || "",
     },
   };
