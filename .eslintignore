@@ -1,0 +1,12 @@
+# Ignore Supabase functions (Deno files)
+supabase/functions/**
+
+# Build outputs
+dist/
+build/
+
+# Dependencies
+node_modules/
+
+# Scripts
+scripts/

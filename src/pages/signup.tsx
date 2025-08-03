@@ -140,9 +140,7 @@ export default function SignupPage() {
     const isLocalhost =
       window.location.hostname === "localhost" ||
       window.location.hostname === "127.0.0.1";
-    const redirectUrl = isLocalhost
-      ? "http://localhost:5173/auth/callback"
-      : "https://gnymble-signup-btjiiaajr-percy-tech.vercel.app/auth/callback";
+    const redirectUrl = `${window.location.origin}/auth/callback`;
 
     console.log("Google OAuth redirect URL:", redirectUrl);
 

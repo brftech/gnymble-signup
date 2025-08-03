@@ -1,0 +1,32 @@
+{
+  "folders": [
+    {
+      "name": "Gnymble Signup (React)",
+      "path": ".",
+      "settings": {
+        "deno.enable": false,
+        "typescript.validate.enable": true,
+        "typescript.tsdk": "node_modules/typescript/lib"
+      }
+    },
+    {
+      "name": "Supabase Functions (Deno)",
+      "path": "supabase/functions",
+      "settings": {
+        "deno.enable": true,
+        "deno.lint": true,
+        "deno.unstable": true,
+        "typescript.validate.enable": false,
+        "editor.defaultFormatter": "denoland.vscode-deno"
+      }
+    }
+  ],
+  "settings": {
+    "files.exclude": {
+      "**/.git": true,
+      "**/.DS_Store": true,
+      "**/node_modules": true,
+      "**/dist": true
+    }
+  }
+}
