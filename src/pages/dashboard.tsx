@@ -34,6 +34,7 @@ export default function Dashboard() {
 
   const loadUserProfile = useCallback(async (userId: string) => {
     console.log("👤 Loading profile for user:", userId);
+    console.log("🕰️ Loading at:", new Date().toISOString());
 
     try {
       // First, try to get the basic profile
@@ -74,9 +75,13 @@ export default function Dashboard() {
 
         if (!companyError && companyData) {
           console.log("✅ Company data loaded:", companyData);
-          company = companyData.companies || null;
+          // Type assertion to handle the join result
+          company = (companyData as any).companies || null;
+          console.log("🆔 Company TCR Brand ID:", company?.tcr_brand_id);
+          console.log("📊 Company Brand Status:", company?.brand_verification_status);
         } else {
           console.log("⚠️ No company data found for user");
+          console.log("❌ Company Error:", companyError);
         }
       } catch (companyError) {
         console.log(
@@ -143,14 +148,14 @@ export default function Dashboard() {
       id: "brand-verification",
       title: "Brand Verification",
       description:
-        profile?.brand_verification_status === "verified"
+        profile?.brand_verification_status === "verified" || profile?.brand_verification_status === "approved"
           ? "Brand verified and approved by TCR"
-          : profile?.brand_verification_status === "pending"
+          : profile?.brand_verification_status === "pending" || profile?.brand_verification_status === "submitted"
           ? "Brand verification in progress with TCR"
           : profile?.brand_verification_status === "rejected"
           ? "Brand verification rejected - please review and resubmit"
           : "Submit company information for TCR compliance",
-      completed: profile?.brand_verification_status === "verified",
+      completed: profile?.brand_verification_status === "verified" || profile?.brand_verification_status === "approved",
       required: true,
     },
     {
@@ -291,12 +296,23 @@ export default function Dashboard() {
               Welcome back, {profile?.full_name || user?.email}
             </p>
           </div>
-          <button
-            onClick={handleLogout}
-            className="px-4 py-2 text-gray-400 hover:text-white border border-gray-700 rounded-md hover:border-gray-600"
-          >
-            Logout
-          </button>
+          <div className="flex space-x-2">
+            <button
+              onClick={() => {
+                console.log("🔄 Manual refresh triggered");
+                loadUserProfile(user?.id || "");
+              }}
+              className="px-4 py-2 text-blue-400 hover:text-blue-300 border border-blue-700 rounded-md hover:border-blue-600"
+            >
+              Refresh
+            </button>
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2 text-gray-400 hover:text-white border border-gray-700 rounded-md hover:border-gray-600"
+            >
+              Logout
+            </button>
+          </div>
         </div>
       </header>
 
@@ -461,7 +477,7 @@ export default function Dashboard() {
                       onClick={handleOnboarding}
                       className="bg-[#d67635] hover:bg-[#c96528] px-4 py-2 rounded-md text-sm font-medium"
                     >
-                      {profile?.brand_verification_status === "pending"
+                      {profile?.brand_verification_status === "pending" || profile?.brand_verification_status === "submitted"
                         ? "Check Status"
                         : "Start Brand Verification"}
                     </button>
@@ -498,9 +514,9 @@ export default function Dashboard() {
             ) : (
               <>
                 <p>1. ✅ Payment completed - Ready for onboarding</p>
-                {profile?.brand_verification_status === "verified" ? (
+                {profile?.brand_verification_status === "verified" || profile?.brand_verification_status === "approved" ? (
                   <p>2. ✅ Brand verification completed</p>
-                ) : profile?.brand_verification_status === "pending" ? (
+                ) : profile?.brand_verification_status === "pending" || profile?.brand_verification_status === "submitted" ? (
                   <p>2. 🔄 Brand verification in progress with TCR</p>
                 ) : profile?.brand_verification_status === "rejected" ? (
                   <p>
@@ -510,14 +526,14 @@ export default function Dashboard() {
                 ) : (
                   <p>2. Complete brand verification (TCR compliance)</p>
                 )}
-                {profile?.brand_verification_status === "verified" ? (
+                {profile?.brand_verification_status === "verified" || profile?.brand_verification_status === "approved" ? (
                   <p>3. Get campaign approval for SMS messaging</p>
                 ) : (
                   <p>3. ⏳ Campaign approval (requires brand verification)</p>
                 )}
                 <p>4. Access your Gnymble dashboard and start messaging</p>
                 <div className="mt-4 space-y-3">
-                  {profile?.brand_verification_status === "verified" ? (
+                  {profile?.brand_verification_status === "verified" || profile?.brand_verification_status === "approved" ? (
                     <button
                       onClick={handleOnboarding}
                       className="bg-[#d67635] hover:bg-[#c96528] px-6 py-3 rounded-md font-semibold text-white transition-colors"
@@ -529,25 +545,11 @@ export default function Dashboard() {
                       onClick={handleOnboarding}
                       className="bg-[#d67635] hover:bg-[#c96528] px-6 py-3 rounded-md font-semibold text-white transition-colors"
                     >
-                      {profile?.brand_verification_status === "pending"
+                      {profile?.brand_verification_status === "pending" || profile?.brand_verification_status === "submitted"
                         ? "Check Brand Status"
                         : "Start Brand Verification"}
                     </button>
                   )}
-
-                  <button
-                    onClick={handleTestWebhook}
-                    className="bg-gray-700 hover:bg-gray-600 px-6 py-3 rounded-md font-medium text-white transition-colors"
-                  >
-                    Test Webhook Logic (Debug)
-                  </button>
-
-                  <button
-                    onClick={handleTestDatabaseSimple}
-                    className="bg-blue-700 hover:bg-blue-600 px-6 py-3 rounded-md font-medium text-white transition-colors"
-                  >
-                    Test Database (No RLS)
-                  </button>
                 </div>
               </>
             )}

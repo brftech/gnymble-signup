@@ -40,8 +40,7 @@ export default function AdminTCRStatus() {
         .from("onboarding_submissions")
         .select(`
           *,
-          profiles!inner(email, full_name),
-          companies!inner(name)
+          companies!inner(name, brand_verification_status, tcr_brand_id)
         `)
         .order("created_at", { ascending: false });
 
@@ -60,28 +59,29 @@ export default function AdminTCRStatus() {
 
       if (error) throw error;
 
+      // Get user profiles for the submissions
+      const userIds = data?.map(s => s.user_id) || [];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, email, full_name")
+        .in("id", userIds);
+      
+      // Create a map for quick lookup
+      const profileMap = new Map();
+      profiles?.forEach(p => profileMap.set(p.id, p));
+      
       // Transform the data to include flattened fields
-      const transformedData = data?.map((submission: {
-        id: string;
-        user_id: string;
-        company_id: string;
-        tcr_brand_id: string;
-        tcr_campaign_id: string;
-        brand_verification_status: string;
-        campaign_approval_status: string;
-        submission_data: Record<string, unknown>;
-        status?: string;
-        submitted_at: string;
-        processed_at: string;
-        created_at: string;
-        profiles?: { email: string; full_name: string };
-        companies?: { name: string };
-      }) => ({
-        ...submission,
-        user_email: submission.profiles?.email,
-        user_name: submission.profiles?.full_name,
-        company_name: submission.companies?.name,
-      })) || [];
+      const transformedData = data?.map((submission: any) => {
+        const profile = profileMap.get(submission.user_id);
+        return {
+          ...submission,
+          user_email: profile?.email || "Unknown",
+          user_name: profile?.full_name || "Unknown",
+          company_name: submission.companies?.name,
+          brand_verification_status: submission.companies?.brand_verification_status || submission.brand_verification_status,
+          tcr_brand_id: submission.companies?.tcr_brand_id || submission.tcr_brand_id,
+        };
+      }) || [];
 
       setSubmissions(transformedData);
     } catch (error) {
