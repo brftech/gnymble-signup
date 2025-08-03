@@ -4,9 +4,7 @@ import { supabase } from "../../lib/supabaseClient";
 import {
   LayoutDashboard,
   Users,
-  Building2,
   FileText,
-  Activity,
   LogOut,
   Menu,
   X,

@@ -2,7 +2,14 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { checkBrandStatus, checkCampaignStatus } from "../../lib/tcrApi";
 import AdminLayout from "../../components/admin/AdminLayout";
-import { FileText, CheckCircle, XCircle, Clock, RefreshCw, AlertCircle } from "lucide-react";
+import {
+  FileText,
+  CheckCircle,
+  XCircle,
+  Clock,
+  RefreshCw,
+  AlertCircle,
+} from "lucide-react";
 import { toast } from "sonner";
 
 interface TCRSubmission {
@@ -27,7 +34,8 @@ export default function AdminTCRStatus() {
   const [submissions, setSubmissions] = useState<TCRSubmission[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [selectedSubmission, setSelectedSubmission] = useState<TCRSubmission | null>(null);
+  const [selectedSubmission, setSelectedSubmission] =
+    useState<TCRSubmission | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>("all");
 
   useEffect(() => {
@@ -38,20 +46,22 @@ export default function AdminTCRStatus() {
     try {
       let query = supabase
         .from("onboarding_submissions")
-        .select(`
+        .select(
+          `
           *,
           companies!inner(name, brand_verification_status, tcr_brand_id)
-        `)
+        `
+        )
         .order("created_at", { ascending: false });
 
       // Apply filters
       if (filterStatus !== "all") {
         if (filterStatus === "pending") {
-          query = query.or('status.is.null,status.eq.pending');
+          query = query.or("status.is.null,status.eq.pending");
         } else if (filterStatus === "approved") {
-          query = query.eq('status', 'approved');
+          query = query.eq("status", "approved");
         } else if (filterStatus === "rejected") {
-          query = query.eq('status', 'rejected');
+          query = query.eq("status", "rejected");
         }
       }
 
@@ -60,28 +70,32 @@ export default function AdminTCRStatus() {
       if (error) throw error;
 
       // Get user profiles for the submissions
-      const userIds = data?.map(s => s.user_id) || [];
+      const userIds = data?.map((s) => s.user_id) || [];
       const { data: profiles } = await supabase
         .from("profiles")
         .select("id, email, full_name")
         .in("id", userIds);
-      
+
       // Create a map for quick lookup
       const profileMap = new Map();
-      profiles?.forEach(p => profileMap.set(p.id, p));
-      
+      profiles?.forEach((p) => profileMap.set(p.id, p));
+
       // Transform the data to include flattened fields
-      const transformedData = data?.map((submission: any) => {
-        const profile = profileMap.get(submission.user_id);
-        return {
-          ...submission,
-          user_email: profile?.email || "Unknown",
-          user_name: profile?.full_name || "Unknown",
-          company_name: submission.companies?.name,
-          brand_verification_status: submission.companies?.brand_verification_status || submission.brand_verification_status,
-          tcr_brand_id: submission.companies?.tcr_brand_id || submission.tcr_brand_id,
-        };
-      }) || [];
+      const transformedData =
+        data?.map((submission: Record<string, unknown>) => {
+          const profile = profileMap.get(submission.user_id);
+          return {
+            ...submission,
+            user_email: profile?.email || "Unknown",
+            user_name: profile?.full_name || "Unknown",
+            company_name: submission.companies?.name,
+            brand_verification_status:
+              submission.companies?.brand_verification_status ||
+              submission.brand_verification_status,
+            tcr_brand_id:
+              submission.companies?.tcr_brand_id || submission.tcr_brand_id,
+          };
+        }) || [];
 
       setSubmissions(transformedData);
     } catch (error) {
@@ -96,11 +110,11 @@ export default function AdminTCRStatus() {
     setRefreshing(true);
     try {
       toast.info("Checking TCR status...");
-      
+
       // Check brand status if we have a brand ID
       if (submission.tcr_brand_id) {
         const brandStatus = await checkBrandStatus(submission.tcr_brand_id);
-        
+
         // Update company's brand verification status
         const { error: brandError } = await supabase
           .from("companies")
@@ -109,16 +123,18 @@ export default function AdminTCRStatus() {
             updated_at: new Date().toISOString(),
           })
           .eq("id", submission.company_id);
-          
+
         if (brandError) {
           console.error("Error updating brand status:", brandError);
         }
       }
-      
+
       // Check campaign status if we have a campaign ID
       if (submission.tcr_campaign_id) {
-        const campaignStatus = await checkCampaignStatus(submission.tcr_campaign_id);
-        
+        const campaignStatus = await checkCampaignStatus(
+          submission.tcr_campaign_id
+        );
+
         // Update campaign approval status in campaigns table
         const { error: campaignError } = await supabase
           .from("campaigns")
@@ -127,25 +143,28 @@ export default function AdminTCRStatus() {
             updated_at: new Date().toISOString(),
           })
           .eq("tcr_campaign_id", submission.tcr_campaign_id);
-          
+
         if (campaignError) {
           console.error("Error updating campaign status:", campaignError);
         }
       }
-      
+
       // Update the submission status
       const { error: submissionError } = await supabase
         .from("onboarding_submissions")
         .update({
-          status: submission.tcr_brand_id && submission.tcr_campaign_id ? "approved" : "submitted",
+          status:
+            submission.tcr_brand_id && submission.tcr_campaign_id
+              ? "approved"
+              : "submitted",
           processed_at: new Date().toISOString(),
         })
         .eq("id", submission.id);
-        
+
       if (submissionError) {
         console.error("Error updating submission:", submissionError);
       }
-      
+
       toast.success("Status refreshed successfully");
       loadSubmissions();
     } catch (error) {
@@ -182,9 +201,13 @@ export default function AdminTCRStatus() {
       pending: "bg-yellow-900/30 text-yellow-400",
       submitted: "bg-blue-900/30 text-blue-400",
     };
-    
+
     return (
-      <span className={`px-2 py-1 text-xs rounded-full ${colors[statusLower] || "bg-gray-800 text-gray-400"}`}>
+      <span
+        className={`px-2 py-1 text-xs rounded-full ${
+          colors[statusLower] || "bg-gray-800 text-gray-400"
+        }`}
+      >
         {status || "Pending"}
       </span>
     );
@@ -210,14 +233,18 @@ export default function AdminTCRStatus() {
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold">TCR Status Monitor</h1>
-            <p className="text-gray-400">Track brand and campaign registrations</p>
+            <p className="text-gray-400">
+              Track brand and campaign registrations
+            </p>
           </div>
           <button
             onClick={() => loadSubmissions()}
             disabled={refreshing}
             className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-md flex items-center space-x-2 disabled:opacity-50"
           >
-            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw
+              className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+            />
             <span>Refresh All</span>
           </button>
         </div>
@@ -246,19 +273,39 @@ export default function AdminTCRStatus() {
           <div className="bg-gray-900 border border-gray-800 rounded-lg p-4">
             <p className="text-sm text-gray-400">Pending</p>
             <p className="text-2xl font-bold text-yellow-400">
-              {submissions.filter(s => !s.status || s.status === "pending" || s.status === "submitted").length}
+              {
+                submissions.filter(
+                  (s) =>
+                    !s.status ||
+                    s.status === "pending" ||
+                    s.status === "submitted"
+                ).length
+              }
             </p>
           </div>
           <div className="bg-gray-900 border border-gray-800 rounded-lg p-4">
             <p className="text-sm text-gray-400">Approved</p>
             <p className="text-2xl font-bold text-green-400">
-              {submissions.filter(s => s.status === "approved" || s.brand_verification_status === "approved" || s.brand_verification_status === "verified").length}
+              {
+                submissions.filter(
+                  (s) =>
+                    s.status === "approved" ||
+                    s.brand_verification_status === "approved" ||
+                    s.brand_verification_status === "verified"
+                ).length
+              }
             </p>
           </div>
           <div className="bg-gray-900 border border-gray-800 rounded-lg p-4">
             <p className="text-sm text-gray-400">Rejected</p>
             <p className="text-2xl font-bold text-red-400">
-              {submissions.filter(s => s.status === "rejected" || s.brand_verification_status === "rejected").length}
+              {
+                submissions.filter(
+                  (s) =>
+                    s.status === "rejected" ||
+                    s.brand_verification_status === "rejected"
+                ).length
+              }
             </p>
           </div>
         </div>
@@ -282,45 +329,58 @@ export default function AdminTCRStatus() {
                 {submissions.map((submission) => (
                   <tr key={submission.id} className="hover:bg-gray-800/50">
                     <td className="px-6 py-4">
-                      <div className="font-medium">{submission.company_name}</div>
+                      <div className="font-medium">
+                        {submission.company_name}
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm">
                         <div>{submission.user_name}</div>
-                        <div className="text-gray-400">{submission.user_email}</div>
+                        <div className="text-gray-400">
+                          {submission.user_email}
+                        </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-2">
                         {getStatusIcon(submission.brand_verification_status)}
-                        {getStatusBadge(submission.brand_verification_status || "Pending")}
+                        {getStatusBadge(
+                          submission.brand_verification_status || "Pending"
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-2">
                         {getStatusIcon(submission.campaign_approval_status)}
-                        {getStatusBadge(submission.campaign_approval_status || "Pending")}
+                        {getStatusBadge(
+                          submission.campaign_approval_status || "Pending"
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm">
                         {submission.tcr_brand_id && (
                           <div className="text-xs">
-                            <span className="text-gray-400">Brand:</span> {submission.tcr_brand_id}
+                            <span className="text-gray-400">Brand:</span>{" "}
+                            {submission.tcr_brand_id}
                           </div>
                         )}
                         {submission.tcr_campaign_id && (
                           <div className="text-xs">
-                            <span className="text-gray-400">Campaign:</span> {submission.tcr_campaign_id}
+                            <span className="text-gray-400">Campaign:</span>{" "}
+                            {submission.tcr_campaign_id}
                           </div>
                         )}
-                        {!submission.tcr_brand_id && !submission.tcr_campaign_id && (
-                          <span className="text-gray-500">Not submitted</span>
-                        )}
+                        {!submission.tcr_brand_id &&
+                          !submission.tcr_campaign_id && (
+                            <span className="text-gray-500">Not submitted</span>
+                          )}
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-400">
-                      {new Date(submission.submitted_at || submission.created_at).toLocaleDateString()}
+                      {new Date(
+                        submission.submitted_at || submission.created_at
+                      ).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-2">
@@ -360,28 +420,43 @@ export default function AdminTCRStatus() {
                     ✕
                   </button>
                 </div>
-                
+
                 <div className="space-y-4">
                   <div>
                     <h4 className="font-medium mb-2">Company Information</h4>
                     <div className="bg-gray-800 rounded p-3 text-sm">
                       <pre className="whitespace-pre-wrap">
-                        {JSON.stringify(selectedSubmission.submission_data, null, 2)}
+                        {JSON.stringify(
+                          selectedSubmission.submission_data,
+                          null,
+                          2
+                        )}
                       </pre>
                     </div>
                   </div>
-                  
+
                   <div>
                     <h4 className="font-medium mb-2">Status History</h4>
                     <div className="space-y-2 text-sm">
                       <div className="flex items-center space-x-2">
                         <FileText className="h-4 w-4 text-gray-400" />
-                        <span>Submitted: {new Date(selectedSubmission.submitted_at || selectedSubmission.created_at).toLocaleString()}</span>
+                        <span>
+                          Submitted:{" "}
+                          {new Date(
+                            selectedSubmission.submitted_at ||
+                              selectedSubmission.created_at
+                          ).toLocaleString()}
+                        </span>
                       </div>
                       {selectedSubmission.processed_at && (
                         <div className="flex items-center space-x-2">
                           <CheckCircle className="h-4 w-4 text-green-400" />
-                          <span>Processed: {new Date(selectedSubmission.processed_at).toLocaleString()}</span>
+                          <span>
+                            Processed:{" "}
+                            {new Date(
+                              selectedSubmission.processed_at
+                            ).toLocaleString()}
+                          </span>
                         </div>
                       )}
                     </div>

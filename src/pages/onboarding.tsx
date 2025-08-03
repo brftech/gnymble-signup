@@ -91,16 +91,16 @@ export default function Onboarding() {
 
   // Handle payment success redirect
   useEffect(() => {
-    const paymentSuccess = searchParams.get('payment') === 'success';
-    const sessionId = searchParams.get('session_id');
-    
+    const paymentSuccess = searchParams.get("payment") === "success";
+    const sessionId = searchParams.get("session_id");
+
     if (paymentSuccess && sessionId) {
-      console.log('🎉 Payment successful! Session ID:', sessionId);
-      toast.success('Payment completed successfully! Welcome to Gnymble!');
-      
+      console.log("🎉 Payment successful! Session ID:", sessionId);
+      toast.success("Payment completed successfully! Welcome to Gnymble!");
+
       // Redirect to dashboard after a short delay to show the success message
       setTimeout(() => {
-        navigate('/dashboard');
+        navigate("/dashboard");
       }, 2000);
     }
   }, [searchParams, navigate]);
@@ -109,7 +109,9 @@ export default function Onboarding() {
     setLoading(true);
     try {
       // Client-side validation before sending to TCR
-      const validation = validateOnboardingForm(formData);
+      const validation = validateOnboardingForm(
+        formData as unknown as Record<string, string | undefined>
+      );
 
       if (!validation.isValid) {
         const errorMessages = Object.values(validation.errors).join(", ");
@@ -206,10 +208,7 @@ export default function Onboarding() {
           user_id: user.id,
           company_id: profile.company_id,
           submission_data: formData,
-          status:
-            tcrResponse.status === "APPROVED" || tcrResponse.status === "ACTIVE"
-              ? "approved"
-              : "submitted",
+          status: tcrResponse.status === "APPROVED" ? "approved" : "submitted",
           tcr_brand_id: tcrResponse.brandId,
         });
 
@@ -224,9 +223,7 @@ export default function Onboarding() {
         .update({
           tcr_brand_id: tcrResponse.brandId,
           brand_verification_status:
-            tcrResponse.status === "APPROVED" || tcrResponse.status === "ACTIVE"
-              ? "approved"
-              : "submitted",
+            tcrResponse.status === "APPROVED" ? "approved" : "submitted",
           brand_verification_date:
             tcrResponse.status === "APPROVED" ? new Date().toISOString() : null,
           updated_at: new Date().toISOString(),
@@ -246,9 +243,7 @@ export default function Onboarding() {
 
       toast.success(
         `Brand verification ${
-          tcrResponse.status === "APPROVED" || tcrResponse.status === "ACTIVE"
-            ? "approved"
-            : "submitted"
+          tcrResponse.status === "APPROVED" ? "approved" : "submitted"
         } to TCR!`
       );
 
