@@ -95,6 +95,7 @@ export default function Payment() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "Origin": window.location.origin,
           },
           body: JSON.stringify({
             user_id: user.id,
