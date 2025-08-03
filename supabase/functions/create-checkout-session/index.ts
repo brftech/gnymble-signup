@@ -40,7 +40,7 @@ serve(async (req) => {
         },
       ],
       mode: "subscription",
-      success_url: `https://gnymble.percytech.com/onboarding?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${origin}/onboarding?payment=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/dashboard?payment=cancelled`,
       allow_promotion_codes: true,
     });

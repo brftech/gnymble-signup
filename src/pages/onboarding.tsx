@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import { toast } from "sonner";
 import { Button } from "../components/ui/button";
@@ -44,6 +44,7 @@ export default function Onboarding() {
     mobile_phone: "",
   });
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const loadUserProfile = useCallback(async () => {
     try {
@@ -88,14 +89,30 @@ export default function Onboarding() {
     loadUserProfile();
   }, [loadUserProfile]);
 
+  // Handle payment success redirect
+  useEffect(() => {
+    const paymentSuccess = searchParams.get('payment') === 'success';
+    const sessionId = searchParams.get('session_id');
+    
+    if (paymentSuccess && sessionId) {
+      console.log('🎉 Payment successful! Session ID:', sessionId);
+      toast.success('Payment completed successfully! Welcome to Gnymble!');
+      
+      // Redirect to dashboard after a short delay to show the success message
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 2000);
+    }
+  }, [searchParams, navigate]);
+
   const handleBrandVerification = async () => {
     setLoading(true);
     try {
       // Client-side validation before sending to TCR
       const validation = validateOnboardingForm(formData);
-      
+
       if (!validation.isValid) {
-        const errorMessages = Object.values(validation.errors).join(', ');
+        const errorMessages = Object.values(validation.errors).join(", ");
         throw new Error(`Validation failed: ${errorMessages}`);
       }
 
@@ -115,7 +132,7 @@ export default function Onboarding() {
       if (!profile?.company_id) {
         throw new Error("No company found for user");
       }
-      
+
       // Verify user_company_roles exists
       const { data: userCompanyRole, error: roleError } = await supabase
         .from("user_company_roles")
@@ -123,7 +140,7 @@ export default function Onboarding() {
         .eq("user_id", user.id)
         .eq("company_id", profile.company_id)
         .single();
-        
+
       if (roleError || !userCompanyRole) {
         console.error("❌ User company role not found:", roleError);
         // Create the relationship if it doesn't exist
@@ -133,11 +150,14 @@ export default function Onboarding() {
             user_id: user.id,
             company_id: profile.company_id,
             role: "owner",
-            is_primary: true
+            is_primary: true,
           });
-          
+
         if (createRoleError) {
-          console.error("❌ Failed to create user company role:", createRoleError);
+          console.error(
+            "❌ Failed to create user company role:",
+            createRoleError
+          );
         }
       }
 
@@ -186,7 +206,10 @@ export default function Onboarding() {
           user_id: user.id,
           company_id: profile.company_id,
           submission_data: formData,
-          status: tcrResponse.status === "APPROVED" || tcrResponse.status === "ACTIVE" ? "approved" : "submitted",
+          status:
+            tcrResponse.status === "APPROVED" || tcrResponse.status === "ACTIVE"
+              ? "approved"
+              : "submitted",
           tcr_brand_id: tcrResponse.brandId,
         });
 
@@ -201,7 +224,9 @@ export default function Onboarding() {
         .update({
           tcr_brand_id: tcrResponse.brandId,
           brand_verification_status:
-            tcrResponse.status === "APPROVED" || tcrResponse.status === "ACTIVE" ? "approved" : "submitted",
+            tcrResponse.status === "APPROVED" || tcrResponse.status === "ACTIVE"
+              ? "approved"
+              : "submitted",
           brand_verification_date:
             tcrResponse.status === "APPROVED" ? new Date().toISOString() : null,
           updated_at: new Date().toISOString(),
@@ -214,17 +239,22 @@ export default function Onboarding() {
       }
 
       console.log("✅ Brand verification submitted successfully:", formData);
-      console.log("📊 Final brand status in DB:", tcrResponse.status === "APPROVED" ? "approved" : "submitted");
-      
+      console.log(
+        "📊 Final brand status in DB:",
+        tcrResponse.status === "APPROVED" ? "approved" : "submitted"
+      );
+
       toast.success(
         `Brand verification ${
-          tcrResponse.status === "APPROVED" || tcrResponse.status === "ACTIVE" ? "approved" : "submitted"
+          tcrResponse.status === "APPROVED" || tcrResponse.status === "ACTIVE"
+            ? "approved"
+            : "submitted"
         } to TCR!`
       );
-      
+
       // Force a profile reload to update dashboard
       await loadUserProfile();
-      
+
       setCurrentStep("campaign");
     } catch (error) {
       console.error("Brand verification error:", error);
@@ -711,7 +741,9 @@ export default function Onboarding() {
                   }
                   className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 >
-                  <option value="RETAIL_AND_CONSUMER_PRODUCTS">Retail and Consumer Products</option>
+                  <option value="RETAIL_AND_CONSUMER_PRODUCTS">
+                    Retail and Consumer Products
+                  </option>
                   <option value="FOOD_AND_BEVERAGE">Food and Beverage</option>
                   <option value="HEALTHCARE">Healthcare</option>
                   <option value="FINANCIAL_SERVICES">Financial Services</option>
@@ -758,10 +790,13 @@ export default function Onboarding() {
               </svg>
             </div>
 
-            <h2 className="text-2xl font-bold mb-4">Brand Registration Status</h2>
+            <h2 className="text-2xl font-bold mb-4">
+              Brand Registration Status
+            </h2>
             <p className="text-gray-400 mb-8">
-              Your brand has been submitted to The Campaign Registry (TCR) for verification.
-              This process typically takes 24-48 hours. You can check your status in the dashboard.
+              Your brand has been submitted to The Campaign Registry (TCR) for
+              verification. This process typically takes 24-48 hours. You can
+              check your status in the dashboard.
             </p>
 
             <div className="bg-blue-900/20 border border-blue-800 rounded-lg p-6 mb-8">

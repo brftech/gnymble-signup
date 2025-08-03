@@ -26,10 +26,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const navigation = [
     { name: "Overview", href: "/admin", icon: LayoutDashboard },
     { name: "Users", href: "/admin/users", icon: Users },
-    { name: "Companies", href: "/admin/companies", icon: Building2 },
     { name: "TCR Status", href: "/admin/tcr-status", icon: FileText },
-    { name: "Metrics", href: "/admin/metrics", icon: Activity },
-    { name: "Audit Logs", href: "/admin/audit-logs", icon: History },
+    { name: "Activity Logs", href: "/admin/logs", icon: History },
   ];
 
   const handleLogout = async () => {

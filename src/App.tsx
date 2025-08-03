@@ -15,6 +15,7 @@ import AdminRoute from "./components/AdminRoute";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminTCRStatus from "./pages/admin/AdminTCRStatus";
+import AdminLogs from "./pages/admin/AdminLogs";
 
 function App() {
   const location = useLocation();
@@ -71,6 +72,14 @@ function App() {
           element={
             <AdminRoute>
               <AdminTCRStatus />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/logs"
+          element={
+            <AdminRoute>
+              <AdminLogs />
             </AdminRoute>
           }
         />
