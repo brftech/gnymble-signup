@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,7 +8,7 @@ const corsHeaders = {
 };
 
 // TCR Configuration
-const TCR_BASE_URL = "https://csp-api-staging.campaignregistry.com";
+const TCR_BASE_URL = "https://csp-api-staging.campaignregistry.com/v2";
 const TCR_SECRET = "7456068D62D049C8A72FC32352D8F792";
 const TCR_KEY = "AA36CC19C3454EFC8937E7407329FB9F";
 
@@ -26,15 +27,15 @@ function getAuthHeaders(): HeadersInit {
 // Helper function to map our vertical types to TCR vertical types
 function mapVerticalType(ourVerticalType: string): string {
   const verticalMap: Record<string, string> = {
-    CIGAR_RETAIL: "RETAIL_AND_CONSUMER_PRODUCTS",
-    SPEAKEASY: "FOOD_AND_BEVERAGE",
-    RESTAURANT: "FOOD_AND_BEVERAGE",
-    BAR: "FOOD_AND_BEVERAGE",
-    LOUNGE: "FOOD_AND_BEVERAGE",
+    CIGAR_RETAIL: "RETAIL",
+    SPEAKEASY: "FOOD_BEVERAGE",
+    RESTAURANT: "FOOD_BEVERAGE",
+    BAR: "FOOD_BEVERAGE",
+    LOUNGE: "FOOD_BEVERAGE",
     OTHER: "OTHER",
   };
 
-  return verticalMap[ourVerticalType] || "RETAIL_AND_CONSUMER_PRODUCTS";
+  return verticalMap[ourVerticalType] || "RETAIL";
 }
 
 // Helper function to map our legal forms to TCR legal forms
@@ -55,6 +56,14 @@ serve(async (req) => {
   }
 
   try {
+    // Simple authorization check - just verify the header exists
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader) {
+      throw new Error('No authorization header');
+    }
+
+    console.log('✅ Authorization header present');
+
     const { action, data } = await req.json();
 
     console.log(`🎯 TCR Proxy: ${action}`, data);
@@ -127,22 +136,23 @@ async function handleBrandSubmission(brandData: TCRBrandData) {
   try {
     console.log("🚀 Submitting brand verification to TCR:", brandData);
 
-    const response = await fetch(`${TCR_BASE_URL}/v2/brands`, {
+    const response = await fetch(`${TCR_BASE_URL}/brand/nonBlocking`, {
       method: "POST",
       headers: getAuthHeaders(),
       body: JSON.stringify({
-        brandId: brandData.brandId,
-        brandName: brandData.brandName,
-        dbaName: brandData.dbaName,
-        countryOfRegistration: brandData.countryOfRegistration,
-        taxNumber: brandData.taxNumber,
-        taxIssuingCountry: brandData.taxIssuingCountry,
-        address: brandData.address,
+        displayName: brandData.brandName,
+        companyName: brandData.brandName,
+        ein: brandData.taxNumber,
+        entityType: mapLegalForm(brandData.legalForm),
+        vertical: mapVerticalType(brandData.verticalType),
         website: brandData.website,
-        verticalType: mapVerticalType(brandData.verticalType),
-        legalForm: mapLegalForm(brandData.legalForm),
-        businessPhone: brandData.businessPhone,
-        pointOfContact: brandData.pointOfContact,
+        street: brandData.address.street,
+        city: brandData.address.city,
+        state: brandData.address.stateRegion,
+        postalCode: brandData.address.postalCode,
+        country: brandData.address.country,
+        phone: brandData.businessPhone,
+        email: brandData.pointOfContact.email,
       }),
     });
 
@@ -178,7 +188,7 @@ async function handleCampaignSubmission(campaignData: TCRCampaignData) {
   try {
     console.log("🚀 Submitting campaign approval to TCR:", campaignData);
 
-    const response = await fetch(`${TCR_BASE_URL}/v2/campaigns`, {
+    const response = await fetch(`${TCR_BASE_URL}/campaign`, {
       method: "POST",
       headers: getAuthHeaders(),
       body: JSON.stringify({
@@ -225,7 +235,7 @@ async function handleBrandStatusCheck(data: { brandId: string }) {
   try {
     console.log("🔍 Checking brand status for:", data.brandId);
 
-    const response = await fetch(`${TCR_BASE_URL}/v2/brand/${data.brandId}`, {
+    const response = await fetch(`${TCR_BASE_URL}/brand/${data.brandId}`, {
       method: "GET",
       headers: getAuthHeaders(),
     });
@@ -263,7 +273,7 @@ async function handleCampaignStatusCheck(data: { campaignId: string }) {
     console.log("🔍 Checking campaign status for:", data.campaignId);
 
     const response = await fetch(
-      `${TCR_BASE_URL}/v2/campaign/${data.campaignId}`,
+      `${TCR_BASE_URL}/campaign/${data.campaignId}`,
       {
         method: "GET",
         headers: getAuthHeaders(),

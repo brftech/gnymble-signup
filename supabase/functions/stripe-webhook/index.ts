@@ -67,29 +67,61 @@ serve(async (req) => {
 
       console.log("🔗 Supabase client initialized");
 
-      // Get user profile data first
+      // Get user profile data first, create if doesn't exist
       console.log("👤 Fetching user profile for ID:", userId);
-      const { data: userProfile, error: profileFetchError } = await supabase
+      let { data: userProfile, error: profileFetchError } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", userId)
         .single();
 
       if (profileFetchError) {
-        console.error("❌ Error fetching user profile:", profileFetchError);
-        return new Response(
-          JSON.stringify({
-            error: "Failed to fetch user profile",
-            details: profileFetchError,
-          }),
-          {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-            status: 500,
-          }
+        console.log(
+          "⚠️ Profile not found, creating new profile for user:",
+          userId
         );
+
+        // Create a new profile for the user
+        const { data: newProfile, error: createProfileError } = await supabase
+          .from("profiles")
+          .insert({
+            id: userId,
+            email:
+              session.metadata?.email ||
+              session.customer_details?.email ||
+              "unknown@example.com",
+            full_name:
+              session.metadata?.full_name ||
+              session.customer_details?.name ||
+              "Unknown User",
+            phone: session.metadata?.phone || "",
+            payment_status: "pending",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .select()
+          .single();
+
+        if (createProfileError) {
+          console.error("❌ Error creating user profile:", createProfileError);
+          return new Response(
+            JSON.stringify({
+              error: "Failed to create user profile",
+              details: createProfileError,
+            }),
+            {
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+              status: 500,
+            }
+          );
+        }
+
+        userProfile = newProfile;
+        console.log("✅ Created new profile:", userProfile);
+      } else {
+        console.log("✅ User profile fetched:", userProfile);
       }
 
-      console.log("✅ User profile fetched:", userProfile);
       console.log("🏢 Company ID from profile:", userProfile.company_id);
 
       // 1. Update profile with payment status
@@ -216,6 +248,7 @@ serve(async (req) => {
           current_period_end: new Date(
             Date.now() + 30 * 24 * 60 * 60 * 1000
           ).toISOString(), // 30 days
+          created_at: new Date().toISOString(),
         };
 
         console.log("📋 Subscription insert data:", subscriptionInsertData);
@@ -257,6 +290,7 @@ serve(async (req) => {
           access_level: "full",
           platform_user_id: userId,
           onboarding_completed: false,
+          created_at: new Date().toISOString(),
         };
 
         console.log("📋 Access insert data:", accessInsertData);

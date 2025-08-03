@@ -277,7 +277,6 @@ export function transformOnboardingDataToTCR(onboardingData: {
   const websiteValidation = validateAndFormatWebsite(
     onboardingData.website || ""
   );
-
   // Throw errors if validation fails
   if (!einValidation.isValid) {
     throw new Error(`EIN validation failed: ${einValidation.error}`);
@@ -291,7 +290,6 @@ export function transformOnboardingDataToTCR(onboardingData: {
   if (!websiteValidation.isValid) {
     throw new Error(`Website validation failed: ${websiteValidation.error}`);
   }
-
   const brandRequest: TCRBrandRequest = {
     brandName: onboardingData.legal_company_name,
     dbaName: onboardingData.dba_brand_name || "",

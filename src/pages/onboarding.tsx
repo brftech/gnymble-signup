@@ -10,6 +10,7 @@ import {
   transformOnboardingDataToTCR,
 } from "../lib/tcrApi";
 import { testDatabaseConnection } from "../lib/testDatabase";
+import { validateOnboardingForm } from "../lib/validation";
 
 export default function Onboarding() {
   const [currentStep, setCurrentStep] = useState<
@@ -90,27 +91,12 @@ export default function Onboarding() {
   const handleBrandVerification = async () => {
     setLoading(true);
     try {
-      // Validate required brand fields
-      const requiredFields = [
-        "legal_company_name",
-        "country_of_registration",
-        "tax_number_ein",
-        "address_street",
-        "city",
-        "state_region",
-        "postal_code",
-        "country",
-        "website",
-        "legal_form",
-        "vertical_type",
-        "business_phone",
-        "point_of_contact_email",
-      ];
-
-      for (const field of requiredFields) {
-        if (!formData[field as keyof OnboardingData]?.trim()) {
-          throw new Error(`${field.replace(/_/g, " ")} is required`);
-        }
+      // Client-side validation before sending to TCR
+      const validation = validateOnboardingForm(formData);
+      
+      if (!validation.isValid) {
+        const errorMessages = Object.values(validation.errors).join(', ');
+        throw new Error(`Validation failed: ${errorMessages}`);
       }
 
       // Get current user

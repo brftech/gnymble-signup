@@ -31,102 +31,6 @@ export default function Dashboard() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const onboardingSteps: OnboardingStep[] = [
-    {
-      id: "payment",
-      title: "Complete Payment",
-      description: "Purchase the onboarding package to get started",
-      completed: profile?.payment_status === "paid",
-      required: true,
-    },
-    {
-      id: "brand-verification",
-      title: "Brand Verification",
-      description: "Submit company information for TCR compliance",
-      completed: false, // Will be updated based on onboarding status
-      required: true,
-    },
-    {
-      id: "campaign-approval",
-      title: "Campaign Approval",
-      description: "Get campaign approved for SMS messaging",
-      completed: false, // Will be updated based on onboarding status
-      required: true,
-    },
-    {
-      id: "platform-access",
-      title: "Platform Access",
-      description: "Access your Gnymble dashboard and start messaging",
-      completed: false,
-      required: true,
-    },
-  ];
-
-  const checkPaymentStatus = useCallback(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const paymentStatus = urlParams.get("payment");
-
-    if (paymentStatus === "success") {
-      toast.success("Payment completed successfully! Welcome to Gnymble!");
-      // Clear the URL parameter
-      window.history.replaceState({}, document.title, window.location.pathname);
-
-      // Refresh the profile immediately
-      if (user) {
-        loadUserProfile(user.id);
-      }
-    } else if (paymentStatus === "cancelled") {
-      toast.error("Payment was cancelled. You can try again anytime.");
-      // Clear the URL parameter
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
-  }, [user]);
-
-  useEffect(() => {
-    const initializeDashboard = async () => {
-      try {
-        // Get session first
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-
-        if (!session?.user) {
-          console.log("❌ No session found, redirecting to login");
-          window.location.href = "/login";
-          return;
-        }
-
-        console.log("✅ User found:", session.user.email);
-        setUser(session.user);
-
-        // Load profile with shorter timeout
-        await loadUserProfile(session.user.id);
-
-        // Check payment status
-        checkPaymentStatus();
-
-        setLoading(false);
-      } catch (error) {
-        console.error("💥 Error initializing dashboard:", error);
-        toast.error("Error loading dashboard");
-        setLoading(false);
-      }
-    };
-
-    initializeDashboard();
-
-    // Listen for auth state changes (simplified)
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_OUT") {
-        window.location.href = "/login";
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [checkPaymentStatus]);
-
   const loadUserProfile = useCallback(async (userId: string) => {
     console.log("👤 Loading profile for user:", userId);
 
@@ -265,6 +169,109 @@ export default function Dashboard() {
     },
     [user, loadUserProfile]
   );
+
+  const checkPaymentStatus = useCallback(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentStatus = urlParams.get("payment");
+
+    if (paymentStatus === "success") {
+      toast.success("Payment completed successfully! Welcome to Gnymble!");
+      // Clear the URL parameter
+      window.history.replaceState({}, document.title, window.location.pathname);
+
+      // Refresh the profile immediately
+      if (user) {
+        loadUserProfile(user.id);
+      }
+    } else if (paymentStatus === "cancelled") {
+      toast.error("Payment was cancelled. You can try again anytime.");
+      // Clear the URL parameter
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [user, loadUserProfile]);
+
+  const onboardingSteps: OnboardingStep[] = [
+    {
+      id: "payment",
+      title: "Complete Payment",
+      description: "Purchase the onboarding package to get started",
+      completed: profile?.payment_status === "paid",
+      required: true,
+    },
+    {
+      id: "brand-verification",
+      title: "Brand Verification",
+      description:
+        profile?.brand_verification_status === "verified"
+          ? "Brand verified and approved by TCR"
+          : profile?.brand_verification_status === "pending"
+          ? "Brand verification in progress with TCR"
+          : profile?.brand_verification_status === "rejected"
+          ? "Brand verification rejected - please review and resubmit"
+          : "Submit company information for TCR compliance",
+      completed: profile?.brand_verification_status === "verified",
+      required: true,
+    },
+    {
+      id: "campaign-approval",
+      title: "Campaign Approval",
+      description: "Get campaign approved for SMS messaging",
+      completed: false, // Will be updated when campaign approval is implemented
+      required: true,
+    },
+    {
+      id: "platform-access",
+      title: "Platform Access",
+      description: "Access your Gnymble dashboard and start messaging",
+      completed: false,
+      required: true,
+    },
+  ];
+
+  useEffect(() => {
+    const initializeDashboard = async () => {
+      try {
+        // Get session first
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (!session?.user) {
+          console.log("❌ No session found, redirecting to login");
+          window.location.href = "/login";
+          return;
+        }
+
+        console.log("✅ User found:", session.user.email);
+        setUser(session.user);
+
+        // Load profile with shorter timeout
+        await loadUserProfile(session.user.id);
+
+        // Check payment status
+        checkPaymentStatus();
+
+        setLoading(false);
+      } catch (error) {
+        console.error("💥 Error initializing dashboard:", error);
+        toast.error("Error loading dashboard");
+        setLoading(false);
+      }
+    };
+
+    initializeDashboard();
+
+    // Listen for auth state changes (simplified)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") {
+        window.location.href = "/login";
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [checkPaymentStatus, loadUserProfile]);
 
   // Separate useEffect for periodic brand status checking
   useEffect(() => {
@@ -532,17 +539,20 @@ export default function Dashboard() {
                       onClick={handleOnboarding}
                       className="bg-[#d67635] hover:bg-[#c96528] px-4 py-2 rounded-md text-sm font-medium"
                     >
-                      Start Onboarding
+                      {profile?.brand_verification_status === "pending"
+                        ? "Check Status"
+                        : "Start Brand Verification"}
                     </button>
                   )}
                 {step.id === "campaign-approval" &&
                   profile?.payment_status === "paid" &&
+                  profile?.brand_verification_status === "verified" &&
                   !step.completed && (
                     <button
                       onClick={handleOnboarding}
                       className="bg-[#d67635] hover:bg-[#c96528] px-4 py-2 rounded-md text-sm font-medium"
                     >
-                      Continue Onboarding
+                      Start Campaign Approval
                     </button>
                   )}
               </div>
@@ -566,16 +576,42 @@ export default function Dashboard() {
             ) : (
               <>
                 <p>1. ✅ Payment completed - Ready for onboarding</p>
-                <p>2. Complete brand verification (TCR compliance)</p>
-                <p>3. Get campaign approval for SMS messaging</p>
+                {profile?.brand_verification_status === "verified" ? (
+                  <p>2. ✅ Brand verification completed</p>
+                ) : profile?.brand_verification_status === "pending" ? (
+                  <p>2. 🔄 Brand verification in progress with TCR</p>
+                ) : profile?.brand_verification_status === "rejected" ? (
+                  <p>
+                    2. ❌ Brand verification rejected - please review and
+                    resubmit
+                  </p>
+                ) : (
+                  <p>2. Complete brand verification (TCR compliance)</p>
+                )}
+                {profile?.brand_verification_status === "verified" ? (
+                  <p>3. Get campaign approval for SMS messaging</p>
+                ) : (
+                  <p>3. ⏳ Campaign approval (requires brand verification)</p>
+                )}
                 <p>4. Access your Gnymble dashboard and start messaging</p>
                 <div className="mt-4 space-y-3">
-                  <button
-                    onClick={handleOnboarding}
-                    className="bg-[#d67635] hover:bg-[#c96528] px-6 py-3 rounded-md font-semibold text-white transition-colors"
-                  >
-                    Start Onboarding Process →
-                  </button>
+                  {profile?.brand_verification_status === "verified" ? (
+                    <button
+                      onClick={handleOnboarding}
+                      className="bg-[#d67635] hover:bg-[#c96528] px-6 py-3 rounded-md font-semibold text-white transition-colors"
+                    >
+                      Start Campaign Approval →
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleOnboarding}
+                      className="bg-[#d67635] hover:bg-[#c96528] px-6 py-3 rounded-md font-semibold text-white transition-colors"
+                    >
+                      {profile?.brand_verification_status === "pending"
+                        ? "Check Brand Status"
+                        : "Start Brand Verification"}
+                    </button>
+                  )}
 
                   <button
                     onClick={handleTestWebhook}
