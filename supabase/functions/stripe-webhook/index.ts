@@ -69,7 +69,7 @@ serve(async (req) => {
 
       // Get user profile data first, create if doesn't exist
       console.log("👤 Fetching user profile for ID:", userId);
-      let { data: userProfile, error: profileFetchError } = await supabase
+      const { data: userProfile, error: profileFetchError } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", userId)

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
+import { checkBrandStatus, checkCampaignStatus } from "../../lib/tcrApi";
 import AdminLayout from "../../components/admin/AdminLayout";
 import { FileText, CheckCircle, XCircle, Clock, RefreshCw, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -15,7 +16,8 @@ interface TCRSubmission {
   tcr_campaign_id: string;
   brand_verification_status: string;
   campaign_approval_status: string;
-  submission_data: any;
+  submission_data: Record<string, unknown>;
+  status?: string;
   submitted_at: string;
   processed_at: string;
   created_at: string;
@@ -30,7 +32,7 @@ export default function AdminTCRStatus() {
 
   useEffect(() => {
     loadSubmissions();
-  }, [filterStatus]);
+  }, [filterStatus, loadSubmissions]);
 
   const loadSubmissions = async () => {
     try {
@@ -59,7 +61,22 @@ export default function AdminTCRStatus() {
       if (error) throw error;
 
       // Transform the data to include flattened fields
-      const transformedData = data?.map((submission: any) => ({
+      const transformedData = data?.map((submission: {
+        id: string;
+        user_id: string;
+        company_id: string;
+        tcr_brand_id: string;
+        tcr_campaign_id: string;
+        brand_verification_status: string;
+        campaign_approval_status: string;
+        submission_data: Record<string, unknown>;
+        status?: string;
+        submitted_at: string;
+        processed_at: string;
+        created_at: string;
+        profiles?: { email: string; full_name: string };
+        companies?: { name: string };
+      }) => ({
         ...submission,
         user_email: submission.profiles?.email,
         user_name: submission.profiles?.full_name,
@@ -78,19 +95,58 @@ export default function AdminTCRStatus() {
   const refreshTCRStatus = async (submission: TCRSubmission) => {
     setRefreshing(true);
     try {
-      // Here you would call your TCR API to check the latest status
-      // For now, we'll just simulate a refresh
       toast.info("Checking TCR status...");
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Check brand status if we have a brand ID
+      if (submission.tcr_brand_id) {
+        const brandStatus = await checkBrandStatus(submission.tcr_brand_id);
+        
+        // Update company's brand verification status
+        const { error: brandError } = await supabase
+          .from("companies")
+          .update({
+            brand_verification_status: brandStatus.status.toLowerCase(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", submission.company_id);
+          
+        if (brandError) {
+          console.error("Error updating brand status:", brandError);
+        }
+      }
       
-      // In real implementation, you would:
-      // 1. Call checkBrandStatus(submission.tcr_brand_id)
-      // 2. Call checkCampaignStatus(submission.tcr_campaign_id)
-      // 3. Update the database with new status
+      // Check campaign status if we have a campaign ID
+      if (submission.tcr_campaign_id) {
+        const campaignStatus = await checkCampaignStatus(submission.tcr_campaign_id);
+        
+        // Update campaign approval status in campaigns table
+        const { error: campaignError } = await supabase
+          .from("campaigns")
+          .update({
+            campaign_approval_status: campaignStatus.status.toLowerCase(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq("tcr_campaign_id", submission.tcr_campaign_id);
+          
+        if (campaignError) {
+          console.error("Error updating campaign status:", campaignError);
+        }
+      }
       
-      toast.success("Status refreshed");
+      // Update the submission status
+      const { error: submissionError } = await supabase
+        .from("onboarding_submissions")
+        .update({
+          status: submission.tcr_brand_id && submission.tcr_campaign_id ? "approved" : "submitted",
+          processed_at: new Date().toISOString(),
+        })
+        .eq("id", submission.id);
+        
+      if (submissionError) {
+        console.error("Error updating submission:", submissionError);
+      }
+      
+      toast.success("Status refreshed successfully");
       loadSubmissions();
     } catch (error) {
       console.error("Error refreshing status:", error);
@@ -118,7 +174,7 @@ export default function AdminTCRStatus() {
 
   const getStatusBadge = (status: string) => {
     const statusLower = status?.toLowerCase() || "pending";
-    const colors = {
+    const colors: Record<string, string> = {
       approved: "bg-green-900/30 text-green-400",
       verified: "bg-green-900/30 text-green-400",
       rejected: "bg-red-900/30 text-red-400",
@@ -190,19 +246,19 @@ export default function AdminTCRStatus() {
           <div className="bg-gray-900 border border-gray-800 rounded-lg p-4">
             <p className="text-sm text-gray-400">Pending</p>
             <p className="text-2xl font-bold text-yellow-400">
-              {submissions.filter(s => !s.status || s.status === "pending").length}
+              {submissions.filter(s => !s.status || s.status === "pending" || s.status === "submitted").length}
             </p>
           </div>
           <div className="bg-gray-900 border border-gray-800 rounded-lg p-4">
             <p className="text-sm text-gray-400">Approved</p>
             <p className="text-2xl font-bold text-green-400">
-              {submissions.filter(s => s.status === "approved").length}
+              {submissions.filter(s => s.status === "approved" || s.brand_verification_status === "approved" || s.brand_verification_status === "verified").length}
             </p>
           </div>
           <div className="bg-gray-900 border border-gray-800 rounded-lg p-4">
             <p className="text-sm text-gray-400">Rejected</p>
             <p className="text-2xl font-bold text-red-400">
-              {submissions.filter(s => s.status === "rejected").length}
+              {submissions.filter(s => s.status === "rejected" || s.brand_verification_status === "rejected").length}
             </p>
           </div>
         </div>

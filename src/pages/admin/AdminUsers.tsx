@@ -33,7 +33,7 @@ export default function AdminUsers() {
 
   useEffect(() => {
     filterUsers();
-  }, [users, searchTerm, filterStatus]);
+  }, [users, searchTerm, filterStatus, filterUsers]);
 
   const loadUsers = async () => {
     try {

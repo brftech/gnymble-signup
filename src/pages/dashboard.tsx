@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { supabase } from "../lib/supabaseClient";
 import { testWebhookLogic } from "../lib/testWebhook";
 import { testDatabaseSimple } from "../lib/testDatabaseSimple";
+import type { Company } from "../types/database";
 
 interface UserProfile {
   id: string;
@@ -50,10 +51,7 @@ export default function Dashboard() {
       console.log("✅ Basic profile loaded:", profileData);
 
       // Then try to get company information with a more flexible join
-      let company: {
-        brand_verification_status?: string;
-        tcr_brand_id?: string;
-      } | null = null;
+      let company: Company | null = null;
       try {
         const { data: companyData, error: companyError } = await supabase
           .from("user_company_roles")
@@ -76,7 +74,7 @@ export default function Dashboard() {
 
         if (!companyError && companyData) {
           console.log("✅ Company data loaded:", companyData);
-          company = companyData.companies?.[0] || null;
+          company = companyData.companies || null;
         } else {
           console.log("⚠️ No company data found for user");
         }
@@ -111,66 +109,9 @@ export default function Dashboard() {
     }
   }, []);
 
-  const checkBrandVerificationStatus = useCallback(
-    async (brandId: string) => {
-      try {
-        console.log("🔍 Checking brand verification status for:", brandId);
 
-        const response = await fetch(
-          `https://rndpcearcqnvrnjxabgq.supabase.co/functions/v1/tcr-proxy`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJuZHBjZWFyY3FudnJuanhhYmdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM0NDQ2NDYsImV4cCI6MjA1OTAyMDY0Nn0.bYzWmLoviaS9ERAbDRh-ZH6B7dMtmUwWRwJpCNrdzFM`,
-            },
-            body: JSON.stringify({
-              action: "checkBrandStatus",
-              data: { brandId },
-            }),
-          }
-        );
 
-        if (response.ok) {
-          const result = await response.json();
-          console.log("✅ Brand status check result:", result);
-
-          if (result.success && result.status) {
-            // Get user's company ID first
-            const { data: profile } = await supabase
-              .from("profiles")
-              .select("user_company_roles!inner(company_id)")
-              .eq("id", user?.id)
-              .eq("user_company_roles.is_primary", true)
-              .single();
-
-            if (profile?.user_company_roles?.[0]?.company_id) {
-              // Update company with new status
-              const { error: updateError } = await supabase
-                .from("companies")
-                .update({
-                  brand_verification_status: result.status.toLowerCase(),
-                  updated_at: new Date().toISOString(),
-                })
-                .eq("id", profile.user_company_roles[0].company_id);
-
-              if (!updateError) {
-                // Reload profile to show updated status
-                if (user) {
-                  loadUserProfile(user.id);
-                }
-              }
-            }
-          }
-        }
-      } catch (error) {
-        console.error("❌ Error checking brand status:", error);
-      }
-    },
-    [user, loadUserProfile]
-  );
-
-  const checkPaymentStatus = useCallback(() => {
+  const checkPaymentStatus = useCallback((userId?: string) => {
     const urlParams = new URLSearchParams(window.location.search);
     const paymentStatus = urlParams.get("payment");
 
@@ -180,15 +121,15 @@ export default function Dashboard() {
       window.history.replaceState({}, document.title, window.location.pathname);
 
       // Refresh the profile immediately
-      if (user) {
-        loadUserProfile(user.id);
+      if (userId) {
+        loadUserProfile(userId);
       }
     } else if (paymentStatus === "cancelled") {
       toast.error("Payment was cancelled. You can try again anytime.");
       // Clear the URL parameter
       window.history.replaceState({}, document.title, window.location.pathname);
     }
-  }, [user, loadUserProfile]);
+  }, [loadUserProfile]);
 
   const onboardingSteps: OnboardingStep[] = [
     {
@@ -229,6 +170,7 @@ export default function Dashboard() {
   ];
 
   useEffect(() => {
+    // Always load when component mounts or when returning from onboarding
     const initializeDashboard = async () => {
       try {
         // Get session first
@@ -249,7 +191,7 @@ export default function Dashboard() {
         await loadUserProfile(session.user.id);
 
         // Check payment status
-        checkPaymentStatus();
+        checkPaymentStatus(session.user.id);
 
         setLoading(false);
       } catch (error) {
@@ -271,27 +213,7 @@ export default function Dashboard() {
     });
 
     return () => subscription.unsubscribe();
-  }, [checkPaymentStatus, loadUserProfile]);
-
-  // Separate useEffect for periodic brand status checking
-  useEffect(() => {
-    if (
-      profile?.brand_verification_status === "pending" &&
-      profile?.tcr_brand_id
-    ) {
-      const interval = setInterval(() => {
-        if (profile.tcr_brand_id) {
-          checkBrandVerificationStatus(profile.tcr_brand_id);
-        }
-      }, 300000); // Check every 5 minutes
-
-      return () => clearInterval(interval);
-    }
-  }, [
-    profile?.brand_verification_status,
-    profile?.tcr_brand_id,
-    checkBrandVerificationStatus,
-  ]);
+  }, [loadUserProfile, checkPaymentStatus]);
 
   const handlePayment = () => {
     window.location.href = "/payment";

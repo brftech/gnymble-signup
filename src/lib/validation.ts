@@ -203,7 +203,7 @@ export function validateAndFormatWebsite(website: string): { isValid: boolean; f
 }
 
 // Comprehensive form validation
-export function validateOnboardingForm(formData: any): { isValid: boolean; errors: Record<string, string> } {
+export function validateOnboardingForm(formData: Record<string, string | undefined>): { isValid: boolean; errors: Record<string, string> } {
   const errors: Record<string, string> = {};
   
   // Required fields

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import AdminLayout from "../../components/admin/AdminLayout";
-import { Activity, User, Calendar, Search } from "lucide-react";
+import { User, Calendar, Search } from "lucide-react";
 
 interface AuditLog {
   id: string;
@@ -10,7 +10,7 @@ interface AuditLog {
   action: string;
   target_type: string;
   target_id: string;
-  details: any;
+  details: Record<string, unknown> | null;
   created_at: string;
 }
 
@@ -22,7 +22,7 @@ export default function AdminLogs() {
 
   useEffect(() => {
     loadLogs();
-  }, [filterAction]);
+  }, [filterAction, loadLogs]);
 
   const loadLogs = async () => {
     try {

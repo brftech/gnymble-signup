@@ -6,7 +6,7 @@ export async function testDatabaseConnection() {
     console.log("🧪 Testing database connection...");
 
     // Test 1: Simple query to companies table
-    let { data: companies, error: companiesError } = await supabase
+    const { data: companies, error: companiesError } = await supabase
       .from("companies")
       .select("id, name")
       .limit(1);

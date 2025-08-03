@@ -4,7 +4,7 @@ import Footer from "../components/shared/Footer";
 import SimpleNavigation from "../components/SimpleNavigation";
 import { phoneConfig, phoneScenarios } from "../components/shared/phoneConfig";
 
-export default function Home() {
+export default function InteractivePhonePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black">
       <SimpleNavigation />
@@ -337,4 +337,4 @@ export default function Home() {
       <Footer brand="gnymble" />
     </div>
   );
-}
+} 

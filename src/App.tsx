@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import Signup from "./pages/signup";
 import Login from "./pages/login";
 import Dashboard from "./pages/dashboard";
@@ -7,7 +7,7 @@ import ResetPassword from "./pages/reset-password";
 import AuthCallback from "./pages/auth-callback";
 import CompleteProfile from "./pages/complete-profile";
 import Onboarding from "./pages/onboarding";
-import Home from "./pages/home";
+import InteractivePhonePage from "./pages/interactivephone";
 import SimpleNavigation from "./components/SimpleNavigation";
 import LoginNavigation from "./components/LoginNavigation";
 import Footer from "./components/shared/Footer";
@@ -23,7 +23,7 @@ function App() {
   const isDashboardPage = location.pathname === "/dashboard";
   const isCompleteProfilePage = location.pathname === "/complete-profile";
   const isOnboardingPage = location.pathname === "/onboarding";
-  const isHomePage = location.pathname === "/";
+  const isHomePage = location.pathname === "/interactivephone";
   const isAdminPage = location.pathname.startsWith("/admin");
 
   return (
@@ -37,7 +37,9 @@ function App() {
         <SimpleNavigation />
       )}
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<Navigate to="/signup" replace />} />
+        <Route path="/home" element={<Navigate to="/signup" replace />} />
+        <Route path="/interactivephone" element={<InteractivePhonePage />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
         <Route path="/reset-password" element={<ResetPassword />} />
@@ -46,27 +48,38 @@ function App() {
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/payment" element={<Payment />} />
-        
+
         {/* Admin Routes */}
-        <Route path="/admin" element={
-          <AdminRoute>
-            <AdminDashboard />
-          </AdminRoute>
-        } />
-        <Route path="/admin/users" element={
-          <AdminRoute>
-            <AdminUsers />
-          </AdminRoute>
-        } />
-        <Route path="/admin/tcr-status" element={
-          <AdminRoute>
-            <AdminTCRStatus />
-          </AdminRoute>
-        } />
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/users"
+          element={
+            <AdminRoute>
+              <AdminUsers />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/tcr-status"
+          element={
+            <AdminRoute>
+              <AdminTCRStatus />
+            </AdminRoute>
+          }
+        />
       </Routes>
-      
+
       {/* Add footer to all pages except home and admin (which have their own) */}
-      {!isHomePage && !isAdminPage && <Footer brand="gnymble" variant="minimal" />}
+      {!isHomePage && !isAdminPage && (
+        <Footer brand="gnymble" variant="minimal" />
+      )}
     </>
   );
 }

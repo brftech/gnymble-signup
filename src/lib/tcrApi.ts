@@ -102,12 +102,19 @@ export async function submitBrandVerification(
     console.log("✅ TCR Brand Response:", result);
 
     if (!result.success) {
+      console.error("❌ TCR Error:", result.error);
       throw new Error(result.error || "Unknown TCR error");
+    }
+
+    // Ensure we have required fields
+    if (!result.brandId) {
+      console.error("❌ Missing brandId in TCR response:", result);
+      throw new Error("TCR response missing brandId");
     }
 
     return {
       brandId: result.brandId,
-      status: result.status,
+      status: result.status || "PENDING",
       message: result.message,
       errors: result.errors,
     };

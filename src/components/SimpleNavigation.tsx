@@ -18,7 +18,7 @@ const SimpleNavigation = () => {
   const handleNavClick = (href: string) => {
     setIsOpen(false);
     navigate(href);
-    if (href === "/") {
+    if (href === "/signup") {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
@@ -29,7 +29,7 @@ const SimpleNavigation = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <button
-            onClick={() => handleNavClick("/")}
+            onClick={() => handleNavClick("/signup")}
             className="flex items-center space-x-3"
           >
             <GnymbleLogoElegant size="md" variant="default" />

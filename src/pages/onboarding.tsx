@@ -115,6 +115,31 @@ export default function Onboarding() {
       if (!profile?.company_id) {
         throw new Error("No company found for user");
       }
+      
+      // Verify user_company_roles exists
+      const { data: userCompanyRole, error: roleError } = await supabase
+        .from("user_company_roles")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("company_id", profile.company_id)
+        .single();
+        
+      if (roleError || !userCompanyRole) {
+        console.error("❌ User company role not found:", roleError);
+        // Create the relationship if it doesn't exist
+        const { error: createRoleError } = await supabase
+          .from("user_company_roles")
+          .insert({
+            user_id: user.id,
+            company_id: profile.company_id,
+            role: "owner",
+            is_primary: true
+          });
+          
+        if (createRoleError) {
+          console.error("❌ Failed to create user company role:", createRoleError);
+        }
+      }
 
       // Update company with onboarding data
       const { error: companyError } = await supabase
@@ -147,9 +172,12 @@ export default function Onboarding() {
 
       // Submit to The Campaign Registry (TCR)
       const { brandRequest } = transformOnboardingDataToTCR(formData);
+      console.log("🚀 Submitting brand to TCR:", brandRequest);
       const tcrResponse = await submitBrandVerification(brandRequest);
 
-      console.log("TCR Brand Response:", tcrResponse);
+      console.log("✅ TCR Brand Response:", tcrResponse);
+      console.log("📊 TCR Status:", tcrResponse.status);
+      console.log("🆔 TCR Brand ID:", tcrResponse.brandId);
 
       // Create onboarding submission record with TCR data
       const { error: submissionError } = await supabase
@@ -158,7 +186,7 @@ export default function Onboarding() {
           user_id: user.id,
           company_id: profile.company_id,
           submission_data: formData,
-          status: tcrResponse.status === "APPROVED" ? "approved" : "submitted",
+          status: tcrResponse.status === "APPROVED" || tcrResponse.status === "ACTIVE" ? "approved" : "submitted",
           tcr_brand_id: tcrResponse.brandId,
         });
 
@@ -173,7 +201,7 @@ export default function Onboarding() {
         .update({
           tcr_brand_id: tcrResponse.brandId,
           brand_verification_status:
-            tcrResponse.status === "APPROVED" ? "approved" : "submitted",
+            tcrResponse.status === "APPROVED" || tcrResponse.status === "ACTIVE" ? "approved" : "submitted",
           brand_verification_date:
             tcrResponse.status === "APPROVED" ? new Date().toISOString() : null,
           updated_at: new Date().toISOString(),
@@ -185,12 +213,18 @@ export default function Onboarding() {
         throw tcrUpdateError;
       }
 
-      console.log("Brand verification submitted successfully:", formData);
+      console.log("✅ Brand verification submitted successfully:", formData);
+      console.log("📊 Final brand status in DB:", tcrResponse.status === "APPROVED" ? "approved" : "submitted");
+      
       toast.success(
         `Brand verification ${
-          tcrResponse.status === "APPROVED" ? "approved" : "submitted"
+          tcrResponse.status === "APPROVED" || tcrResponse.status === "ACTIVE" ? "approved" : "submitted"
         } to TCR!`
       );
+      
+      // Force a profile reload to update dashboard
+      await loadUserProfile();
+      
       setCurrentStep("campaign");
     } catch (error) {
       console.error("Brand verification error:", error);
@@ -724,15 +758,15 @@ export default function Onboarding() {
               </svg>
             </div>
 
-            <h2 className="text-2xl font-bold mb-4">Campaign Approval</h2>
+            <h2 className="text-2xl font-bold mb-4">Brand Registration Status</h2>
             <p className="text-gray-400 mb-8">
-              Your brand verification is complete! Campaign approval will be
-              processed automatically based on your company information.
+              Your brand has been submitted to The Campaign Registry (TCR) for verification.
+              This process typically takes 24-48 hours. You can check your status in the dashboard.
             </p>
 
             <div className="bg-blue-900/20 border border-blue-800 rounded-lg p-6 mb-8">
               <h3 className="text-lg font-semibold text-blue-400 mb-4">
-                Brand Information Submitted
+                Brand Registration Details
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
                 <div>
@@ -774,17 +808,17 @@ export default function Onboarding() {
 
             <div className="flex space-x-4">
               <Button
-                onClick={() => setCurrentStep("brand")}
+                onClick={() => navigate("/dashboard")}
                 className="flex-1 py-3 bg-gray-700 hover:bg-gray-600 text-white font-semibold transition-colors"
               >
-                Back
+                Go to Dashboard
               </Button>
               <Button
                 onClick={handleCampaignApproval}
                 disabled={loading}
                 className="flex-1 py-3 bg-primary hover:bg-primary-glow text-primary-foreground font-semibold disabled:opacity-50 transition-colors"
               >
-                {loading ? "Processing..." : "Complete Onboarding"}
+                {loading ? "Processing..." : "Submit Campaign"}
               </Button>
             </div>
           </div>
