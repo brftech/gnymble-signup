@@ -1,6 +1,12 @@
 // The Campaign Registry (TCR) API Integration
 // Using Supabase Edge Function proxy to avoid CORS issues
 import { authConfig } from "../config/auth";
+import {
+  validateAndFormatEIN,
+  validateAndFormatState,
+  validateAndFormatPhone,
+  validateAndFormatWebsite,
+} from "./validation";
 
 const TCR_PROXY_URL =
   "https://rndpcearcqnvrnjxabgq.supabase.co/functions/v1/tcr-proxy";
@@ -63,7 +69,7 @@ function getProxyHeaders(): HeadersInit {
   return {
     "Content-Type": "application/json",
     Accept: "application/json",
-    "Authorization": `Bearer ${authConfig.supabase.anonKey}`,
+    Authorization: `Bearer ${authConfig.supabase.anonKey}`,
   };
 }
 
@@ -264,30 +270,54 @@ export function transformOnboardingDataToTCR(onboardingData: {
   brandRequest: TCRBrandRequest;
   campaignRequest: TCRCampaignRequest;
 } {
+  // Validate and format the data
+  const einValidation = validateAndFormatEIN(onboardingData.tax_number_ein);
+  const stateValidation = validateAndFormatState(onboardingData.state_region);
+  const phoneValidation = validateAndFormatPhone(onboardingData.business_phone);
+  const websiteValidation = validateAndFormatWebsite(
+    onboardingData.website || ""
+  );
+
+  // Throw errors if validation fails
+  if (!einValidation.isValid) {
+    throw new Error(`EIN validation failed: ${einValidation.error}`);
+  }
+  if (!stateValidation.isValid) {
+    throw new Error(`State validation failed: ${stateValidation.error}`);
+  }
+  if (!phoneValidation.isValid) {
+    throw new Error(`Phone validation failed: ${phoneValidation.error}`);
+  }
+  if (!websiteValidation.isValid) {
+    throw new Error(`Website validation failed: ${websiteValidation.error}`);
+  }
+
   const brandRequest: TCRBrandRequest = {
     brandName: onboardingData.legal_company_name,
     dbaName: onboardingData.dba_brand_name || "",
     countryOfRegistration: onboardingData.country_of_registration || "US",
-    taxNumber: onboardingData.tax_number_ein,
+    taxNumber: einValidation.formatted, // Use formatted EIN
     taxIssuingCountry: onboardingData.tax_issuing_country || "US",
     address: {
       street: onboardingData.address_street,
       city: onboardingData.city,
-      stateRegion: onboardingData.state_region,
+      stateRegion: stateValidation.formatted, // Use formatted state code
       postalCode: onboardingData.postal_code,
-      country: onboardingData.country || "United States",
+      country: onboardingData.country || "US",
     },
-    website: onboardingData.website || "",
+    website: websiteValidation.formatted, // Use formatted website
     verticalType:
-      onboardingData.vertical_type || "RETAIL_AND_CONSUMER_PRODUCTS", // Use form value with fallback
-    legalForm: onboardingData.legal_form || "PRIVATE_PROFIT", // Use form value with fallback
-    businessPhone: onboardingData.business_phone,
+      onboardingData.vertical_type || "RETAIL_AND_CONSUMER_PRODUCTS",
+    legalForm: onboardingData.legal_form || "PRIVATE_PROFIT",
+    businessPhone: phoneValidation.formatted, // Use formatted phone
     pointOfContact: {
       firstName: onboardingData.first_name,
       lastName: onboardingData.last_name,
       email:
-        onboardingData.support_email || onboardingData.point_of_contact_email || "",
-      phone: onboardingData.business_phone || onboardingData.mobile_phone || "",
+        onboardingData.support_email ||
+        onboardingData.point_of_contact_email ||
+        "",
+      phone: phoneValidation.formatted, // Use formatted phone
     },
   };
 

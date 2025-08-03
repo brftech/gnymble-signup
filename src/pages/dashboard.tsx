@@ -12,6 +12,8 @@ interface UserProfile {
   payment_status: string;
   stripe_customer_id?: string;
   payment_date?: string;
+  brand_verification_status?: string;
+  tcr_brand_id?: string;
   created_at: string;
   updated_at: string;
 }
@@ -125,23 +127,71 @@ export default function Dashboard() {
     return () => subscription.unsubscribe();
   }, [checkPaymentStatus]);
 
-  const loadUserProfile = async (userId: string) => {
+  const loadUserProfile = useCallback(async (userId: string) => {
     console.log("👤 Loading profile for user:", userId);
 
     try {
-      const { data, error } = await supabase
+      // First, try to get the basic profile
+      const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", userId)
         .single();
 
-      if (error) {
-        console.error("❌ Profile load error:", error);
-        throw error;
+      if (profileError) {
+        console.error("❌ Profile load error:", profileError);
+        throw profileError;
       }
 
-      console.log("✅ Profile loaded successfully:", data);
-      setProfile(data);
+      console.log("✅ Basic profile loaded:", profileData);
+
+      // Then try to get company information with a more flexible join
+      let company: {
+        brand_verification_status?: string;
+        tcr_brand_id?: string;
+      } | null = null;
+      try {
+        const { data: companyData, error: companyError } = await supabase
+          .from("user_company_roles")
+          .select(
+            `
+            company_id,
+            is_primary,
+            companies(
+              id,
+              name,
+              brand_verification_status,
+              tcr_brand_id
+            )
+          `
+          )
+          .eq("user_id", userId)
+          .order("is_primary", { ascending: false }) // Primary companies first
+          .limit(1)
+          .single();
+
+        if (!companyError && companyData) {
+          console.log("✅ Company data loaded:", companyData);
+          company = companyData.companies?.[0] || null;
+        } else {
+          console.log("⚠️ No company data found for user");
+        }
+      } catch (companyError) {
+        console.log(
+          "⚠️ Company data load failed (non-critical):",
+          companyError
+        );
+      }
+
+      // Combine profile and company data
+      const profileWithBrandStatus = {
+        ...profileData,
+        brand_verification_status: company?.brand_verification_status || null,
+        tcr_brand_id: company?.tcr_brand_id || null,
+      };
+
+      console.log("✅ Combined profile data:", profileWithBrandStatus);
+      setProfile(profileWithBrandStatus);
     } catch (error) {
       console.error("💥 Error loading profile:", error);
       // Set a default profile to prevent hanging
@@ -155,7 +205,86 @@ export default function Dashboard() {
         updated_at: new Date().toISOString(),
       });
     }
-  };
+  }, []);
+
+  const checkBrandVerificationStatus = useCallback(
+    async (brandId: string) => {
+      try {
+        console.log("🔍 Checking brand verification status for:", brandId);
+
+        const response = await fetch(
+          `https://rndpcearcqnvrnjxabgq.supabase.co/functions/v1/tcr-proxy`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJuZHBjZWFyY3FudnJuanhhYmdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM0NDQ2NDYsImV4cCI6MjA1OTAyMDY0Nn0.bYzWmLoviaS9ERAbDRh-ZH6B7dMtmUwWRwJpCNrdzFM`,
+            },
+            body: JSON.stringify({
+              action: "checkBrandStatus",
+              data: { brandId },
+            }),
+          }
+        );
+
+        if (response.ok) {
+          const result = await response.json();
+          console.log("✅ Brand status check result:", result);
+
+          if (result.success && result.status) {
+            // Get user's company ID first
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("user_company_roles!inner(company_id)")
+              .eq("id", user?.id)
+              .eq("user_company_roles.is_primary", true)
+              .single();
+
+            if (profile?.user_company_roles?.[0]?.company_id) {
+              // Update company with new status
+              const { error: updateError } = await supabase
+                .from("companies")
+                .update({
+                  brand_verification_status: result.status.toLowerCase(),
+                  updated_at: new Date().toISOString(),
+                })
+                .eq("id", profile.user_company_roles[0].company_id);
+
+              if (!updateError) {
+                // Reload profile to show updated status
+                if (user) {
+                  loadUserProfile(user.id);
+                }
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error("❌ Error checking brand status:", error);
+      }
+    },
+    [user, loadUserProfile]
+  );
+
+  // Separate useEffect for periodic brand status checking
+  useEffect(() => {
+    if (
+      profile?.brand_verification_status === "pending" &&
+      profile?.tcr_brand_id
+    ) {
+      const interval = setInterval(() => {
+        if (profile.tcr_brand_id) {
+          checkBrandVerificationStatus(profile.tcr_brand_id);
+        }
+      }, 300000); // Check every 5 minutes
+
+      return () => clearInterval(interval);
+    }
+  }, [
+    profile?.brand_verification_status,
+    profile?.tcr_brand_id,
+    checkBrandVerificationStatus,
+  ]);
 
   const handlePayment = () => {
     window.location.href = "/payment";
