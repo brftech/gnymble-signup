@@ -46,13 +46,6 @@ export default function Dashboard() {
 
       console.log("✅ Profile loaded successfully:", data);
       setProfile(data);
-
-      // If brand verification is pending, check status after a delay
-      if (data.brand_verification_status === "pending" && data.tcr_brand_id) {
-        setTimeout(() => {
-          checkBrandVerificationStatus(data.tcr_brand_id);
-        }, 2000); // Check after 2 seconds
-      }
     } catch (error) {
       console.error("💥 Error loading profile:", error);
       // Set a default profile to prevent hanging
@@ -93,21 +86,10 @@ export default function Dashboard() {
           console.log("✅ Brand status check result:", result);
 
           if (result.success && result.status) {
-            // Update profile with new status
-            const { error: updateError } = await supabase
-              .from("profiles")
-              .update({
-                brand_verification_status: result.status.toLowerCase(),
-                updated_at: new Date().toISOString(),
-              })
-              .eq("id", user?.id);
-
-            if (!updateError) {
-              // Reload profile to show updated status
-              if (user) {
-                loadUserProfile(user.id);
-              }
-            }
+            // Brand status would need to be updated on companies table
+            // For now, just log the status
+            console.log("Brand status received:", result.status);
+            // TODO: Update companies table with brand status
           }
         }
       } catch (error) {
