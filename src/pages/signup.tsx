@@ -1,6 +1,5 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
-import ReCAPTCHA from "react-google-recaptcha";
 import { supabase } from "../lib/supabaseClient";
 
 export default function SignupPage() {
@@ -19,8 +18,6 @@ export default function SignupPage() {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
-  const recaptchaRef = useRef<ReCAPTCHA>(null);
   const [emailExists, setEmailExists] = useState(false);
   const [checkingEmail, setCheckingEmail] = useState(false);
 
@@ -134,13 +131,7 @@ export default function SignupPage() {
     }
   };
 
-  const handleCaptchaChange = (token: string | null) => {
-    setCaptchaToken(token);
-  };
 
-  const handleCaptchaExpired = () => {
-    setCaptchaToken(null);
-  };
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
@@ -198,13 +189,7 @@ export default function SignupPage() {
       return;
     }
 
-    // Validate reCAPTCHA
-    if (!captchaToken) {
-      toast.error("Please complete the reCAPTCHA verification.");
-      setError("reCAPTCHA verification required");
-      setLoading(false);
-      return;
-    }
+
 
     // Check if email already exists
     if (emailExists) {
@@ -620,19 +605,7 @@ export default function SignupPage() {
                   </div>
                 )}
 
-                {/* reCAPTCHA */}
-                <div className="flex justify-center">
-                  <div className="transform scale-90 origin-center">
-                    <ReCAPTCHA
-                      ref={recaptchaRef}
-                      sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY || "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"}
-                      onChange={handleCaptchaChange}
-                      onExpired={handleCaptchaExpired}
-                      theme="dark"
-                      size="normal"
-                    />
-                  </div>
-                </div>
+
 
                 <button
                   type="submit"
@@ -641,7 +614,6 @@ export default function SignupPage() {
                     !passwordValidation.isValid ||
                     !passwordsMatch ||
                     !phoneValidation ||
-                    !captchaToken ||
                     emailExists ||
                     checkingEmail
                   }
